@@ -13,14 +13,29 @@ public class CacheConfig {
     @JsonProperty("ttl_hours")
     private int ttlHours = 24;
 
+    @JsonProperty("ttl_seconds")
+    private long ttlSeconds = 86400; // 24 hours default
+
     @JsonProperty("max_entries")
     private int maxEntries = 10000;
+
+    @JsonProperty("max_size")
+    private int maxSize = 10000;
+
+    @JsonProperty("min_confidence_to_cache")
+    private double minConfidenceToCache = 0.7;
 
     @JsonProperty("storage")
     private StorageType storage = StorageType.MEMORY;
 
     @JsonProperty("file_path")
     private String filePath = ".healer/cache";
+
+    @JsonProperty("persistence_enabled")
+    private boolean persistenceEnabled = false;
+
+    @JsonProperty("persistence_dir")
+    private String persistenceDir = ".healer/cache";
 
     @JsonProperty("redis_url")
     private String redisUrl;
@@ -42,6 +57,15 @@ public class CacheConfig {
 
     public void setTtlHours(int ttlHours) {
         this.ttlHours = ttlHours;
+        this.ttlSeconds = ttlHours * 3600L;
+    }
+
+    public long getTtlSeconds() {
+        return ttlSeconds;
+    }
+
+    public void setTtlSeconds(long ttlSeconds) {
+        this.ttlSeconds = ttlSeconds;
     }
 
     public int getMaxEntries() {
@@ -50,6 +74,24 @@ public class CacheConfig {
 
     public void setMaxEntries(int maxEntries) {
         this.maxEntries = maxEntries;
+        this.maxSize = maxEntries;
+    }
+
+    public int getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(int maxSize) {
+        this.maxSize = maxSize;
+        this.maxEntries = maxSize;
+    }
+
+    public double getMinConfidenceToCache() {
+        return minConfidenceToCache;
+    }
+
+    public void setMinConfidenceToCache(double minConfidenceToCache) {
+        this.minConfidenceToCache = minConfidenceToCache;
     }
 
     public StorageType getStorage() {
@@ -58,6 +100,7 @@ public class CacheConfig {
 
     public void setStorage(StorageType storage) {
         this.storage = storage;
+        this.persistenceEnabled = (storage == StorageType.FILE || storage == StorageType.REDIS);
     }
 
     public String getFilePath() {
@@ -66,6 +109,23 @@ public class CacheConfig {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+        this.persistenceDir = filePath;
+    }
+
+    public boolean isPersistenceEnabled() {
+        return persistenceEnabled;
+    }
+
+    public void setPersistenceEnabled(boolean persistenceEnabled) {
+        this.persistenceEnabled = persistenceEnabled;
+    }
+
+    public String getPersistenceDir() {
+        return persistenceDir;
+    }
+
+    public void setPersistenceDir(String persistenceDir) {
+        this.persistenceDir = persistenceDir;
     }
 
     public String getRedisUrl() {
@@ -79,7 +139,7 @@ public class CacheConfig {
     @Override
     public String toString() {
         return "CacheConfig{enabled=" + enabled + ", ttlHours=" + ttlHours +
-               ", storage=" + storage + "}";
+               ", maxSize=" + maxSize + ", storage=" + storage + "}";
     }
 
     /**

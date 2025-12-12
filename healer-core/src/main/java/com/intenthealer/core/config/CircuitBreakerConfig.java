@@ -22,6 +22,12 @@ public class CircuitBreakerConfig {
     @JsonProperty("consecutive_failures_threshold")
     private int consecutiveFailuresThreshold = 3;
 
+    @JsonProperty("failure_threshold")
+    private int failureThreshold = 3;
+
+    @JsonProperty("success_threshold_to_close")
+    private int successThresholdToClose = 2;
+
     @JsonProperty("p95_latency_threshold_ms")
     private int p95LatencyThresholdMs = 10000;
 
@@ -33,6 +39,12 @@ public class CircuitBreakerConfig {
 
     @JsonProperty("cooldown_minutes")
     private int cooldownMinutes = 30;
+
+    @JsonProperty("open_duration_seconds")
+    private long openDurationSeconds = 1800; // 30 minutes default
+
+    @JsonProperty("half_open_max_attempts")
+    private int halfOpenMaxAttempts = 3;
 
     @JsonProperty("test_heals_required")
     private int testHealsRequired = 3;
@@ -78,6 +90,24 @@ public class CircuitBreakerConfig {
 
     public void setConsecutiveFailuresThreshold(int consecutiveFailuresThreshold) {
         this.consecutiveFailuresThreshold = consecutiveFailuresThreshold;
+        this.failureThreshold = consecutiveFailuresThreshold;
+    }
+
+    public int getFailureThreshold() {
+        return failureThreshold;
+    }
+
+    public void setFailureThreshold(int failureThreshold) {
+        this.failureThreshold = failureThreshold;
+        this.consecutiveFailuresThreshold = failureThreshold;
+    }
+
+    public int getSuccessThresholdToClose() {
+        return successThresholdToClose;
+    }
+
+    public void setSuccessThresholdToClose(int successThresholdToClose) {
+        this.successThresholdToClose = successThresholdToClose;
     }
 
     public int getP95LatencyThresholdMs() {
@@ -110,6 +140,23 @@ public class CircuitBreakerConfig {
 
     public void setCooldownMinutes(int cooldownMinutes) {
         this.cooldownMinutes = cooldownMinutes;
+        this.openDurationSeconds = cooldownMinutes * 60L;
+    }
+
+    public long getOpenDurationSeconds() {
+        return openDurationSeconds;
+    }
+
+    public void setOpenDurationSeconds(long openDurationSeconds) {
+        this.openDurationSeconds = openDurationSeconds;
+    }
+
+    public int getHalfOpenMaxAttempts() {
+        return halfOpenMaxAttempts;
+    }
+
+    public void setHalfOpenMaxAttempts(int halfOpenMaxAttempts) {
+        this.halfOpenMaxAttempts = halfOpenMaxAttempts;
     }
 
     public int getTestHealsRequired() {
@@ -123,6 +170,7 @@ public class CircuitBreakerConfig {
     @Override
     public String toString() {
         return "CircuitBreakerConfig{enabled=" + enabled +
-               ", falseHealRateThreshold=" + falseHealRateThreshold + "}";
+               ", failureThreshold=" + failureThreshold +
+               ", openDurationSeconds=" + openDurationSeconds + "}";
     }
 }
