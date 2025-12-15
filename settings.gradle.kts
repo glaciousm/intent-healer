@@ -6,6 +6,7 @@ include("healer-selenium")
 include("healer-cucumber")
 include("healer-report")
 include("healer-cli")
+include("healer-example")
 
 dependencyResolutionManagement {
     versionCatalogs {
