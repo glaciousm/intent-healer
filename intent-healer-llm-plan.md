@@ -2966,7 +2966,7 @@ RECOMMENDATIONS
 - [x] Select/dropdown healing
 - [x] @Outcome annotation with custom checks
 - [x] @Invariant annotation
-- [ ] LLM-based outcome validation
+- [x] LLM-based outcome validation
 - [x] Ollama/local model support
 - [x] Azure OpenAI support
 - [x] AWS Bedrock support
