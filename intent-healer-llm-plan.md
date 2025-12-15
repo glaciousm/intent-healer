@@ -2969,17 +2969,17 @@ RECOMMENDATIONS
 - [ ] LLM-based outcome validation
 - [x] Ollama/local model support
 - [x] Azure OpenAI support
-- [ ] AWS Bedrock support
+- [x] AWS Bedrock support
 - [x] Iframe handling
 - [x] Shadow DOM handling
 - [x] Locator patch suggestion (generate fixed locators)
 - [x] TestNG listener
 - [x] JUnit extension
-- [ ] **Confidence calibration system**
+- [x] **Confidence calibration system**
 - [ ] **Pattern learner from corrections**
 - [ ] **Trust dashboard UI**
 - [ ] **Weekly health report generator**
-- [ ] **Feedback API (programmatic correction submission)**
+- [x] **Feedback API (programmatic correction submission)**
 
 ### Nice-to-Have (v1.2+)
 
