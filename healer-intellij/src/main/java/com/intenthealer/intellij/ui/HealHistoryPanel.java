@@ -128,10 +128,25 @@ public class HealHistoryPanel extends JBPanel<HealHistoryPanel> implements Dispo
         int row = historyTable.getSelectedRow();
         if (row >= 0) {
             var entry = tableModel.getEntry(row);
-            // TODO: Add to blacklist via service
-            JOptionPane.showMessageDialog(this,
-                    "Blacklist functionality will be added in a future update.",
-                    "Blacklist", JOptionPane.INFORMATION_MESSAGE);
+
+            // Show dialog to get blacklist reason
+            String reason = JOptionPane.showInputDialog(
+                    this,
+                    "Enter reason for blacklisting this heal:\n" +
+                    "Original: " + entry.originalLocator() + "\n" +
+                    "Healed: " + entry.healedLocator(),
+                    "Blacklist Heal",
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (reason != null && !reason.trim().isEmpty()) {
+                service.blacklistHeal(entry.id(), reason.trim());
+                refresh();
+                JOptionPane.showMessageDialog(this,
+                        "Heal has been blacklisted. This locator mapping will not be suggested again.",
+                        "Blacklisted",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
         }
     }
 

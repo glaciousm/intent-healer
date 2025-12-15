@@ -27,6 +27,8 @@ public class HealerProjectService implements Disposable {
     private final ObjectMapper objectMapper;
     private final List<HealHistoryEntry> healHistory;
     private final List<HealHistoryListener> listeners;
+    private final List<BlacklistEntry> blacklistEntries;
+    private final List<LocatorStabilityEntry> stabilityEntries;
     private volatile TrustLevelInfo currentTrustLevel;
 
     public HealerProjectService(@NotNull Project project) {
@@ -35,9 +37,13 @@ public class HealerProjectService implements Disposable {
         this.objectMapper.registerModule(new JavaTimeModule());
         this.healHistory = new CopyOnWriteArrayList<>();
         this.listeners = new CopyOnWriteArrayList<>();
+        this.blacklistEntries = new CopyOnWriteArrayList<>();
+        this.stabilityEntries = new CopyOnWriteArrayList<>();
         this.currentTrustLevel = new TrustLevelInfo("L0_SHADOW", 0, 0, 0.0);
 
         loadHistory();
+        loadBlacklist();
+        loadStability();
     }
 
     public static HealerProjectService getInstance(@NotNull Project project) {
@@ -155,6 +161,171 @@ public class HealerProjectService implements Disposable {
                 break;
             }
         }
+    }
+
+    /**
+     * Blacklist a heal (mark as permanently blocked).
+     * Blacklisted heals will not be suggested again for the same locator.
+     *
+     * @param healId the heal entry ID
+     * @param reason the reason for blacklisting
+     */
+    public void blacklistHeal(String healId, String reason) {
+        for (HealHistoryEntry entry : healHistory) {
+            if (entry.id().equals(healId)) {
+                String updatedReasoning = entry.reasoning() +
+                    "\n[BLACKLISTED: " + reason + "]";
+                HealHistoryEntry updated = new HealHistoryEntry(
+                        entry.id(),
+                        entry.timestamp(),
+                        entry.featureName(),
+                        entry.scenarioName(),
+                        entry.stepText(),
+                        entry.originalLocator(),
+                        entry.healedLocator(),
+                        entry.confidence(),
+                        updatedReasoning,
+                        HealStatus.BLACKLISTED
+                );
+                healHistory.set(healHistory.indexOf(entry), updated);
+                saveHistory();
+                saveToBlacklistFile(entry.originalLocator(), entry.healedLocator(), reason);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Check if a locator pair is blacklisted.
+     */
+    public boolean isBlacklisted(String originalLocator, String healedLocator) {
+        return blacklistEntries.stream()
+                .anyMatch(e -> e.originalLocator().equals(originalLocator)
+                        && e.healedLocator().equals(healedLocator));
+    }
+
+    /**
+     * Get all blacklist entries.
+     */
+    public List<BlacklistEntry> getBlacklistEntries() {
+        return Collections.unmodifiableList(blacklistEntries);
+    }
+
+    private void saveToBlacklistFile(String originalLocator, String healedLocator, String reason) {
+        BlacklistEntry entry = new BlacklistEntry(
+                UUID.randomUUID().toString(),
+                originalLocator,
+                healedLocator,
+                reason,
+                Instant.now()
+        );
+        blacklistEntries.add(entry);
+
+        Path blacklistPath = getBlacklistPath();
+        try {
+            Files.createDirectories(blacklistPath.getParent());
+            objectMapper.writeValue(blacklistPath.toFile(), blacklistEntries);
+        } catch (IOException e) {
+            // Log but don't fail
+        }
+    }
+
+    private void loadBlacklist() {
+        Path blacklistPath = getBlacklistPath();
+        if (!Files.exists(blacklistPath)) {
+            return;
+        }
+
+        try {
+            BlacklistEntry[] entries = objectMapper.readValue(
+                    blacklistPath.toFile(), BlacklistEntry[].class);
+            blacklistEntries.clear();
+            blacklistEntries.addAll(Arrays.asList(entries));
+        } catch (IOException e) {
+            // Log but don't fail
+        }
+    }
+
+    private Path getBlacklistPath() {
+        String basePath = project.getBasePath();
+        if (basePath == null) {
+            basePath = System.getProperty("user.home");
+        }
+        HealerSettings settings = HealerSettings.getInstance();
+        return Path.of(basePath, settings.healCacheDirectory, "blacklist.json");
+    }
+
+    // ========== Locator Stability Management ==========
+
+    /**
+     * Get all locator stability entries.
+     */
+    public List<LocatorStabilityEntry> getLocatorStabilities() {
+        return Collections.unmodifiableList(stabilityEntries);
+    }
+
+    /**
+     * Get stability summary counts.
+     */
+    public StabilitySummary getStabilitySummary() {
+        int total = stabilityEntries.size();
+        int stable = 0;
+        int moderate = 0;
+        int unstable = 0;
+
+        for (LocatorStabilityEntry entry : stabilityEntries) {
+            switch (entry.level()) {
+                case "VERY_STABLE", "STABLE" -> stable++;
+                case "MODERATE" -> moderate++;
+                case "UNSTABLE", "VERY_UNSTABLE" -> unstable++;
+            }
+        }
+
+        return new StabilitySummary(total, stable, moderate, unstable);
+    }
+
+    /**
+     * Update or add a locator stability entry.
+     */
+    public void updateLocatorStability(LocatorStabilityEntry entry) {
+        stabilityEntries.removeIf(e -> e.locator().equals(entry.locator()));
+        stabilityEntries.add(entry);
+        saveStability();
+    }
+
+    private void loadStability() {
+        Path stabilityPath = getStabilityPath();
+        if (!Files.exists(stabilityPath)) {
+            return;
+        }
+
+        try {
+            LocatorStabilityEntry[] entries = objectMapper.readValue(
+                    stabilityPath.toFile(), LocatorStabilityEntry[].class);
+            stabilityEntries.clear();
+            stabilityEntries.addAll(Arrays.asList(entries));
+        } catch (IOException e) {
+            // Log but don't fail
+        }
+    }
+
+    private void saveStability() {
+        Path stabilityPath = getStabilityPath();
+        try {
+            Files.createDirectories(stabilityPath.getParent());
+            objectMapper.writeValue(stabilityPath.toFile(), stabilityEntries);
+        } catch (IOException e) {
+            // Log but don't fail
+        }
+    }
+
+    private Path getStabilityPath() {
+        String basePath = project.getBasePath();
+        if (basePath == null) {
+            basePath = System.getProperty("user.home");
+        }
+        HealerSettings settings = HealerSettings.getInstance();
+        return Path.of(basePath, settings.healCacheDirectory, "locator-stability.json");
     }
 
     /**
@@ -287,4 +458,37 @@ public class HealerProjectService implements Disposable {
         default void onTrustLevelChanged(TrustLevelInfo trustLevel) {}
         default void onHistoryRefreshed() {}
     }
+
+    /**
+     * Blacklist entry for permanently blocking specific locator healings.
+     */
+    public record BlacklistEntry(
+            String id,
+            String originalLocator,
+            String healedLocator,
+            String reason,
+            Instant timestamp
+    ) {}
+
+    /**
+     * Locator stability tracking entry.
+     */
+    public record LocatorStabilityEntry(
+            String locator,
+            double score,
+            String level,
+            int successes,
+            int failures,
+            int heals
+    ) {}
+
+    /**
+     * Summary of stability counts by level.
+     */
+    public record StabilitySummary(
+            int total,
+            int stable,
+            int moderate,
+            int unstable
+    ) {}
 }
