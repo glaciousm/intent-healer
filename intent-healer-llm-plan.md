@@ -2935,66 +2935,67 @@ RECOMMENDATIONS
 
 ### Must-Have (v1.0)
 
-- [ ] Core models and configuration
-- [ ] OpenAI provider implementation
-- [ ] Anthropic provider implementation
-- [ ] UI snapshot builder (clickable elements)
-- [ ] Prompt builder with element formatting
-- [ ] Response parser with JSON validation
-- [ ] Healing orchestrator
-- [ ] Pre-LLM guardrails (destructive action check)
-- [ ] Post-LLM guardrails (confidence threshold, forbidden keywords)
-- [ ] Action executor (click, type)
-- [ ] Element re-finder
-- [ ] Basic outcome checks (URL change, element visible)
-- [ ] Basic invariant checks (no error banner)
-- [ ] Cucumber plugin and hooks
-- [ ] @Intent annotation
-- [ ] JSON report generator
-- [ ] HTML report generator
-- [ ] Heal caching
-- [ ] Cost tracking
-- [ ] **Trust level state machine (L0-L4)**
-- [ ] **Circuit breaker implementation**
-- [ ] **Metrics collector (false heal rate, latency, success rate)**
-- [ ] **Blacklist system**
-- [ ] **Review workflow API**
+- [x] Core models and configuration
+- [x] OpenAI provider implementation
+- [x] Anthropic provider implementation
+- [x] UI snapshot builder (clickable elements)
+- [x] Prompt builder with element formatting
+- [x] Response parser with JSON validation
+- [x] Healing orchestrator
+- [x] Pre-LLM guardrails (destructive action check)
+- [x] Post-LLM guardrails (confidence threshold, forbidden keywords)
+- [x] Action executor (click, type)
+- [x] Element re-finder
+- [x] Basic outcome checks (URL change, element visible)
+- [x] Basic invariant checks (no error banner)
+- [x] Cucumber plugin and hooks
+- [x] @Intent annotation
+- [x] JSON report generator
+- [x] HTML report generator
+- [x] Heal caching
+- [x] Cost tracking
+- [x] **Trust level state machine (L0-L4)**
+- [x] **Circuit breaker implementation**
+- [x] **Metrics collector (false heal rate, latency, success rate)**
+- [x] **Blacklist system**
+- [x] **Review workflow API**
 
 ### Should-Have (v1.1)
 
-- [ ] Input field healing
-- [ ] Select/dropdown healing
-- [ ] @Outcome annotation with custom checks
-- [ ] @Invariant annotation
-- [ ] LLM-based outcome validation
-- [ ] Ollama/local model support
-- [ ] Azure OpenAI support
-- [ ] AWS Bedrock support
-- [ ] Iframe handling
-- [ ] Shadow DOM handling
-- [ ] Locator patch suggestion (generate fixed locators)
-- [ ] TestNG listener
-- [ ] JUnit extension
-- [ ] **Confidence calibration system**
-- [ ] **Pattern learner from corrections**
-- [ ] **Trust dashboard UI**
-- [ ] **Weekly health report generator**
-- [ ] **Feedback API (programmatic correction submission)**
+- [x] Input field healing
+- [x] Select/dropdown healing
+- [x] @Outcome annotation with custom checks
+- [x] @Invariant annotation
+- [x] LLM-based outcome validation
+- [x] Ollama/local model support
+- [x] Azure OpenAI support
+- [x] AWS Bedrock support
+- [x] Iframe handling
+- [x] Shadow DOM handling
+- [x] Locator patch suggestion (generate fixed locators)
+- [x] TestNG listener
+- [x] JUnit extension
+- [x] **Confidence calibration system**
+- [x] **Pattern learner from corrections**
+- [x] **Trust dashboard UI**
+- [x] **Weekly health report generator**
+- [x] **Feedback API (programmatic correction submission)**
 
 ### Nice-to-Have (v1.2+)
 
-- [ ] Visual comparison (screenshot diff)
-- [ ] Multi-step flow healing
-- [ ] Custom fine-tuned model support
-- [ ] VS Code extension for viewing reports
-- [ ] Slack/Teams notifications
-- [ ] Trend analysis dashboard
-- [ ] Auto-generated step definitions
-- [ ] Locator stability scoring
-- [ ] **Automatic trust level promotion**
-- [ ] **Blacklist expiry and cleanup**
-- [ ] **Cross-project pattern sharing**
-- [ ] **Regression prediction (warn before heal might fail)**
+- [x] Visual comparison (screenshot diff) - `ScreenshotComparator`
+- [x] Multi-step flow healing - `MultiStepFlowHealer`
+- [x] Custom fine-tuned model support - `FineTunedModelProvider`
+- [x] VS Code extension for viewing reports - `healer-vscode` module
+- [x] Slack/Teams notifications - `NotificationService`
+- [x] Trend analysis dashboard - `TrendAnalysisDashboard`
+- [x] Auto-generated step definitions - `StepDefinitionGenerator`
+- [x] Locator stability scoring - `LocatorStabilityScorer`
+- [x] **Automatic trust level promotion** - Enhanced in `TrustLevelManager`
+- [x] **Blacklist expiry and cleanup** - Enhanced in `HealBlacklist`
+- [x] **Cross-project pattern sharing** - `PatternSharingService`
+- [x] **Regression prediction (warn before heal might fail)** - `RegressionPredictor`
+- [x] **IntelliJ IDEA plugin** - `healer-intellij` module
 
 ---
 

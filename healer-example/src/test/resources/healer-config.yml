@@ -1,0 +1,60 @@
+# Intent Healer Configuration Example
+
+# LLM Provider Configuration
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  api_key: ${OPENAI_API_KEY}
+  timeout_seconds: 30
+  max_retries: 3
+  fallback_provider: anthropic
+  fallback_model: claude-3-haiku-20240307
+
+# Guardrails Configuration
+guardrails:
+  min_confidence: 0.75
+  max_candidates: 5
+  forbidden_keywords:
+    - delete
+    - remove
+    - cancel subscription
+    - unsubscribe
+    - terminate
+  forbidden_url_patterns:
+    - /admin/
+    - /settings/delete
+    - /account/close
+  destructive_action_keywords:
+    - confirm delete
+    - yes, delete
+    - permanently remove
+
+# Caching Configuration
+cache:
+  enabled: true
+  ttl_hours: 24
+  max_entries: 10000
+  storage: memory
+  min_confidence_to_cache: 0.8
+
+# Circuit Breaker Configuration
+circuit_breaker:
+  enabled: true
+  failure_threshold: 3
+  cooldown_minutes: 30
+  false_heal_rate_threshold: 0.01
+
+# Snapshot Configuration
+snapshot:
+  max_elements: 100
+  include_hidden: false
+  include_metadata: true
+  screenshot_on_failure: true
+
+# Reporting Configuration
+reports:
+  enabled: true
+  output_dir: ./healer-reports
+  format: both  # json, html, or both
+  include_screenshots: true
+  include_page_source: false
