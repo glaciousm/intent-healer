@@ -10,9 +10,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -27,16 +32,28 @@ public class HealBlacklist {
 
     private static final Logger logger = LoggerFactory.getLogger(HealBlacklist.class);
     private static final String BLACKLIST_FILE_NAME = "heal-blacklist.json";
+    private static final long DEFAULT_CLEANUP_INTERVAL_MINUTES = 15;
 
     private final Map<String, BlacklistEntry> entries;
     private final ObjectMapper objectMapper;
     private final Path persistencePath;
     private final boolean persistenceEnabled;
+    private final ScheduledExecutorService cleanupScheduler;
+    private final AtomicInteger totalExpired = new AtomicInteger(0);
+    private final AtomicInteger totalBlocked = new AtomicInteger(0);
+    private final long defaultTtlSeconds;
+    private volatile Instant lastCleanupTime;
 
     public HealBlacklist(String persistenceDir) {
+        this(persistenceDir, 0, false);
+    }
+
+    public HealBlacklist(String persistenceDir, long defaultTtlSeconds, boolean enableScheduledCleanup) {
         this.entries = new ConcurrentHashMap<>();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
+        this.defaultTtlSeconds = defaultTtlSeconds;
+        this.lastCleanupTime = Instant.now();
 
         if (persistenceDir != null && !persistenceDir.isEmpty()) {
             this.persistencePath = Path.of(persistenceDir, BLACKLIST_FILE_NAME);
@@ -46,10 +63,34 @@ public class HealBlacklist {
             this.persistencePath = null;
             this.persistenceEnabled = false;
         }
+
+        if (enableScheduledCleanup) {
+            this.cleanupScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "blacklist-cleanup");
+                t.setDaemon(true);
+                return t;
+            });
+            this.cleanupScheduler.scheduleAtFixedRate(
+                    this::scheduledCleanup,
+                    DEFAULT_CLEANUP_INTERVAL_MINUTES,
+                    DEFAULT_CLEANUP_INTERVAL_MINUTES,
+                    TimeUnit.MINUTES
+            );
+            logger.info("Scheduled blacklist cleanup enabled (every {} minutes)", DEFAULT_CLEANUP_INTERVAL_MINUTES);
+        } else {
+            this.cleanupScheduler = null;
+        }
     }
 
     public HealBlacklist() {
-        this(null);
+        this(null, 0, false);
+    }
+
+    /**
+     * Create blacklist with scheduled cleanup.
+     */
+    public static HealBlacklist withScheduledCleanup(String persistenceDir, long defaultTtlSeconds) {
+        return new HealBlacklist(persistenceDir, defaultTtlSeconds, true);
     }
 
     /**
@@ -65,6 +106,7 @@ public class HealBlacklist {
 
         for (BlacklistEntry entry : entries.values()) {
             if (entry.matches(pageUrl, origStrategy, origValue, healedStrategy, healedValue)) {
+                totalBlocked.incrementAndGet();
                 logger.info("Heal blocked by blacklist: {} -> {} (reason: {})",
                         original, healed, entry.getReason());
                 return true;
@@ -208,7 +250,7 @@ public class HealBlacklist {
     /**
      * Remove expired entries.
      */
-    private void cleanup() {
+    private int cleanup() {
         int removed = 0;
         Iterator<Map.Entry<String, BlacklistEntry>> it = entries.entrySet().iterator();
         while (it.hasNext()) {
@@ -218,12 +260,161 @@ public class HealBlacklist {
             }
         }
         if (removed > 0) {
+            totalExpired.addAndGet(removed);
             logger.debug("Removed {} expired blacklist entries", removed);
             if (persistenceEnabled) {
                 persistToDisk();
             }
         }
+        lastCleanupTime = Instant.now();
+        return removed;
     }
+
+    /**
+     * Scheduled cleanup task.
+     */
+    private void scheduledCleanup() {
+        try {
+            int removed = cleanup();
+            if (removed > 0) {
+                logger.info("Scheduled cleanup removed {} expired entries, {} remaining", removed, entries.size());
+            }
+        } catch (Exception e) {
+            logger.warn("Scheduled cleanup failed: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Force cleanup and return statistics.
+     */
+    public CleanupResult forceCleanup() {
+        int before = entries.size();
+        int removed = cleanup();
+        return new CleanupResult(removed, before - removed, lastCleanupTime);
+    }
+
+    /**
+     * Get blacklist statistics.
+     */
+    public BlacklistStats getStats() {
+        int active = 0;
+        int expiringSoon = 0;
+        int permanent = 0;
+        Instant threshold = Instant.now().plus(Duration.ofHours(1));
+
+        for (BlacklistEntry entry : entries.values()) {
+            if (entry.isExpired()) continue;
+            active++;
+            if (entry.getExpiresAt() == null) {
+                permanent++;
+            } else if (entry.getExpiresAt().isBefore(threshold)) {
+                expiringSoon++;
+            }
+        }
+
+        return new BlacklistStats(
+                active,
+                permanent,
+                expiringSoon,
+                totalExpired.get(),
+                totalBlocked.get(),
+                lastCleanupTime
+        );
+    }
+
+    /**
+     * Extend TTL for an entry.
+     */
+    public boolean extendTtl(String id, long additionalSeconds) {
+        BlacklistEntry entry = entries.get(id);
+        if (entry == null) {
+            return false;
+        }
+
+        Instant newExpiry;
+        if (entry.getExpiresAt() == null) {
+            newExpiry = Instant.now().plusSeconds(additionalSeconds);
+        } else {
+            newExpiry = entry.getExpiresAt().plusSeconds(additionalSeconds);
+        }
+
+        BlacklistEntry extended = BlacklistEntry.builder()
+                .id(entry.getId())
+                .pageUrlPattern(entry.getPageUrlPattern())
+                .originalLocator(entry.getOriginalLocatorStrategy(), entry.getOriginalLocatorValue())
+                .healedLocator(entry.getHealedLocatorStrategy(), entry.getHealedLocatorValue())
+                .reason(entry.getReason())
+                .expiresAt(newExpiry)
+                .addedBy(entry.getAddedBy())
+                .build();
+
+        entries.put(id, extended);
+        logger.info("Extended TTL for blacklist entry {}: new expiry {}", id, newExpiry);
+
+        if (persistenceEnabled) {
+            persistToDisk();
+        }
+        return true;
+    }
+
+    /**
+     * Remove all expired entries and optionally entries older than a duration.
+     */
+    public int removeOlderThan(Duration age) {
+        Instant threshold = Instant.now().minus(age);
+        int removed = 0;
+        Iterator<Map.Entry<String, BlacklistEntry>> it = entries.entrySet().iterator();
+        while (it.hasNext()) {
+            BlacklistEntry entry = it.next().getValue();
+            if (entry.isExpired() || entry.getCreatedAt().isBefore(threshold)) {
+                it.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            totalExpired.addAndGet(removed);
+            logger.info("Removed {} blacklist entries older than {}", removed, age);
+            if (persistenceEnabled) {
+                persistToDisk();
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * Shutdown the scheduled cleanup executor.
+     */
+    public void shutdown() {
+        if (cleanupScheduler != null) {
+            cleanupScheduler.shutdown();
+            try {
+                if (!cleanupScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    cleanupScheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                cleanupScheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            logger.info("Blacklist cleanup scheduler shut down");
+        }
+    }
+
+    /**
+     * Cleanup result.
+     */
+    public record CleanupResult(int removedCount, int remainingCount, Instant cleanupTime) {}
+
+    /**
+     * Blacklist statistics.
+     */
+    public record BlacklistStats(
+            int activeEntries,
+            int permanentEntries,
+            int expiringSoonEntries,
+            int totalExpiredEntries,
+            int totalBlockedHeals,
+            Instant lastCleanupTime
+    ) {}
 
     /**
      * Persist to disk.

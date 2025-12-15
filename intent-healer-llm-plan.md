@@ -2983,18 +2983,19 @@ RECOMMENDATIONS
 
 ### Nice-to-Have (v1.2+)
 
-- [ ] Visual comparison (screenshot diff)
+- [x] Visual comparison (screenshot diff) - `ScreenshotComparator`
 - [ ] Multi-step flow healing
 - [ ] Custom fine-tuned model support
 - [ ] VS Code extension for viewing reports
 - [ ] Slack/Teams notifications
 - [ ] Trend analysis dashboard
 - [ ] Auto-generated step definitions
-- [ ] Locator stability scoring
-- [ ] **Automatic trust level promotion**
-- [ ] **Blacklist expiry and cleanup**
+- [x] Locator stability scoring - `LocatorStabilityScorer`
+- [x] **Automatic trust level promotion** - Enhanced in `TrustLevelManager`
+- [x] **Blacklist expiry and cleanup** - Enhanced in `HealBlacklist`
 - [ ] **Cross-project pattern sharing**
 - [ ] **Regression prediction (warn before heal might fail)**
+- [x] **IntelliJ IDEA plugin** - `healer-intellij` module
 
 ---
 

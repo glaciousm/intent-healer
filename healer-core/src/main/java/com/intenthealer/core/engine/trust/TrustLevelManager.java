@@ -23,7 +23,10 @@ public class TrustLevelManager {
 
     private final AtomicReference<TrustLevel> currentLevel;
     private final AtomicInteger consecutiveSuccesses;
+    private final AtomicInteger consecutiveFailures;
     private final AtomicInteger failuresInWindow;
+    private final AtomicInteger totalSuccesses;
+    private final AtomicInteger totalFailures;
     private volatile Instant windowStart;
 
     // Configuration
@@ -38,7 +41,10 @@ public class TrustLevelManager {
     private TrustLevelManager(Builder builder) {
         this.currentLevel = new AtomicReference<>(builder.initialLevel);
         this.consecutiveSuccesses = new AtomicInteger(0);
+        this.consecutiveFailures = new AtomicInteger(0);
         this.failuresInWindow = new AtomicInteger(0);
+        this.totalSuccesses = new AtomicInteger(0);
+        this.totalFailures = new AtomicInteger(0);
         this.windowStart = Instant.now();
         this.successesToPromote = builder.successesToPromote;
         this.failuresToDemote = builder.failuresToDemote;
@@ -98,8 +104,10 @@ public class TrustLevelManager {
      * Record a successful heal.
      */
     public void recordSuccess() {
+        totalSuccesses.incrementAndGet();
+        consecutiveFailures.set(0);
         int successes = consecutiveSuccesses.incrementAndGet();
-        logger.debug("Recorded success (consecutive: {})", successes);
+        logger.debug("Recorded success (consecutive: {}, total: {})", successes, totalSuccesses.get());
 
         if (autoPromote && successes >= successesToPromote) {
             promote();
@@ -110,7 +118,9 @@ public class TrustLevelManager {
      * Record a failed heal.
      */
     public void recordFailure() {
+        totalFailures.incrementAndGet();
         consecutiveSuccesses.set(0);
+        consecutiveFailures.incrementAndGet();
 
         // Check if we need to reset the failure window
         Instant now = Instant.now();
@@ -120,7 +130,7 @@ public class TrustLevelManager {
         }
 
         int failures = failuresInWindow.incrementAndGet();
-        logger.debug("Recorded failure (in window: {})", failures);
+        logger.debug("Recorded failure (in window: {}, total: {})", failures, totalFailures.get());
 
         if (autoDemote && failures >= failuresToDemote) {
             demote();
@@ -156,6 +166,7 @@ public class TrustLevelManager {
 
             if (currentLevel.compareAndSet(current, next)) {
                 consecutiveSuccesses.set(0);
+                consecutiveFailures.set(0);
                 logger.info("Trust level promoted: {} -> {}", current, next);
                 return next;
             }
@@ -179,6 +190,8 @@ public class TrustLevelManager {
             }
 
             if (currentLevel.compareAndSet(current, prev)) {
+                consecutiveSuccesses.set(0);
+                consecutiveFailures.set(0);
                 logger.warn("Trust level demoted: {} -> {}", current, prev);
                 return prev;
             }
@@ -197,6 +210,7 @@ public class TrustLevelManager {
 
         TrustLevel previous = currentLevel.getAndSet(level);
         consecutiveSuccesses.set(0);
+        consecutiveFailures.set(0);
         failuresInWindow.set(0);
         windowStart = Instant.now();
 
@@ -208,9 +222,23 @@ public class TrustLevelManager {
      */
     public void resetStats() {
         consecutiveSuccesses.set(0);
+        consecutiveFailures.set(0);
         failuresInWindow.set(0);
         windowStart = Instant.now();
         logger.debug("Trust statistics reset");
+    }
+
+    /**
+     * Reset all statistics including totals.
+     */
+    public void resetAllStats() {
+        consecutiveSuccesses.set(0);
+        consecutiveFailures.set(0);
+        failuresInWindow.set(0);
+        totalSuccesses.set(0);
+        totalFailures.set(0);
+        windowStart = Instant.now();
+        logger.debug("All trust statistics reset");
     }
 
     /**
@@ -220,10 +248,51 @@ public class TrustLevelManager {
         return new TrustStats(
                 currentLevel.get(),
                 consecutiveSuccesses.get(),
+                consecutiveFailures.get(),
                 failuresInWindow.get(),
-                successesToPromote - consecutiveSuccesses.get(),
-                Duration.between(windowStart, Instant.now())
+                totalSuccesses.get(),
+                totalFailures.get(),
+                Math.max(0, successesToPromote - consecutiveSuccesses.get()),
+                Duration.between(windowStart, Instant.now()),
+                getSuccessRate()
         );
+    }
+
+    /**
+     * Get total number of successful heals.
+     */
+    public int getTotalSuccesses() {
+        return totalSuccesses.get();
+    }
+
+    /**
+     * Get total number of failed heals.
+     */
+    public int getTotalFailures() {
+        return totalFailures.get();
+    }
+
+    /**
+     * Get consecutive failures count.
+     */
+    public int getConsecutiveFailures() {
+        return consecutiveFailures.get();
+    }
+
+    /**
+     * Get consecutive successes count.
+     */
+    public int getConsecutiveSuccesses() {
+        return consecutiveSuccesses.get();
+    }
+
+    /**
+     * Get the success rate as a percentage.
+     */
+    public double getSuccessRate() {
+        int total = totalSuccesses.get() + totalFailures.get();
+        if (total == 0) return 0.0;
+        return (double) totalSuccesses.get() / total * 100.0;
     }
 
     /**
@@ -232,10 +301,21 @@ public class TrustLevelManager {
     public record TrustStats(
             TrustLevel currentLevel,
             int consecutiveSuccesses,
+            int consecutiveFailures,
             int failuresInWindow,
+            int totalSuccesses,
+            int totalFailures,
             int successesUntilPromotion,
-            Duration windowElapsed
-    ) {}
+            Duration windowElapsed,
+            double successRate
+    ) {
+        public TrustStats(TrustLevel currentLevel, int consecutiveSuccesses,
+                          int failuresInWindow, int successesUntilPromotion,
+                          Duration windowElapsed) {
+            this(currentLevel, consecutiveSuccesses, 0, failuresInWindow,
+                    0, 0, successesUntilPromotion, windowElapsed, 0.0);
+        }
+    }
 
     public static class Builder {
         private TrustLevel initialLevel = TrustLevel.L0_SHADOW;

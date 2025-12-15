@@ -1,0 +1,103 @@
+<idea-plugin>
+    <id>com.intenthealer.intellij</id>
+    <name>Intent Healer</name>
+    <vendor email="support@intenthealer.com" url="https://intenthealer.com">Intent Healer</vendor>
+
+    <description><![CDATA[
+        <p>Intent Healer plugin for IntelliJ IDEA - LLM-powered self-healing for Selenium tests.</p>
+
+        <h3>Features</h3>
+        <ul>
+            <li><b>Heal History Viewer</b> - Browse and manage heal history</li>
+            <li><b>Trust Dashboard</b> - Monitor trust levels and healing statistics</li>
+            <li><b>Quick Actions</b> - Accept, reject, or blacklist heals from the IDE</li>
+            <li><b>Locator Suggestions</b> - Get suggestions for more stable locators</li>
+            <li><b>Intent Annotations</b> - Auto-complete for @Intent annotations</li>
+        </ul>
+
+        <h3>Getting Started</h3>
+        <ol>
+            <li>Configure Intent Healer in Settings > Tools > Intent Healer</li>
+            <li>Open the Heal Dashboard from View > Tool Windows > Intent Healer</li>
+            <li>Run your tests and view heal history in real-time</li>
+        </ol>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends optional="true" config-file="gherkin.xml">gherkin</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Tool Window -->
+        <toolWindow id="Intent Healer"
+                    secondary="true"
+                    icon="/icons/healer-icon.svg"
+                    anchor="right"
+                    factoryClass="com.intenthealer.intellij.ui.HealerToolWindowFactory"/>
+
+        <!-- Settings -->
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.intenthealer.intellij.settings.HealerSettingsConfigurable"
+                id="com.intenthealer.intellij.settings"
+                displayName="Intent Healer"/>
+
+        <applicationService
+                serviceImplementation="com.intenthealer.intellij.settings.HealerSettings"/>
+
+        <!-- Project Service -->
+        <projectService
+                serviceImplementation="com.intenthealer.intellij.services.HealerProjectService"/>
+
+        <!-- Notifications -->
+        <notificationGroup id="Intent Healer Notifications"
+                           displayType="BALLOON"
+                           toolWindowId="Intent Healer"/>
+
+        <!-- Line Markers for @Intent annotations -->
+        <codeInsight.lineMarkerProvider
+                language="JAVA"
+                implementationClass="com.intenthealer.intellij.ui.IntentLineMarkerProvider"/>
+    </extensions>
+
+    <actions>
+        <!-- Main menu actions -->
+        <group id="IntentHealer.MainMenu" text="Intent Healer" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <action id="IntentHealer.OpenDashboard"
+                    class="com.intenthealer.intellij.actions.OpenDashboardAction"
+                    text="Open Dashboard"
+                    description="Open the Intent Healer dashboard"
+                    icon="/icons/dashboard.svg"/>
+
+            <action id="IntentHealer.ViewHistory"
+                    class="com.intenthealer.intellij.actions.ViewHistoryAction"
+                    text="View Heal History"
+                    description="View recent heal history"
+                    icon="/icons/history.svg"/>
+
+            <separator/>
+
+            <action id="IntentHealer.RefreshCache"
+                    class="com.intenthealer.intellij.actions.RefreshCacheAction"
+                    text="Refresh Cache"
+                    description="Refresh heal cache from disk"/>
+
+            <action id="IntentHealer.ClearCache"
+                    class="com.intenthealer.intellij.actions.ClearCacheAction"
+                    text="Clear Cache"
+                    description="Clear all cached heals"/>
+        </group>
+
+        <!-- Editor popup actions -->
+        <group id="IntentHealer.EditorPopup">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+
+            <action id="IntentHealer.SuggestLocator"
+                    class="com.intenthealer.intellij.actions.SuggestLocatorAction"
+                    text="Suggest Stable Locator"
+                    description="Suggest a more stable locator for this element"/>
+        </group>
+    </actions>
+</idea-plugin>

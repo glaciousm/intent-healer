@@ -9,6 +9,7 @@ include("healer-cli")
 include("healer-example")
 include("healer-testng")
 include("healer-junit")
+include("healer-intellij")
 
 dependencyResolutionManagement {
     versionCatalogs {

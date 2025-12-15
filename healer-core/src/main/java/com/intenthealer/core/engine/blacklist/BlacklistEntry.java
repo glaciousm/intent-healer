@@ -29,9 +29,14 @@ public class BlacklistEntry {
         this.healedLocatorValue = builder.healedLocatorValue;
         this.reason = builder.reason;
         this.createdAt = Instant.now();
-        this.expiresAt = builder.ttlSeconds > 0
-                ? this.createdAt.plusSeconds(builder.ttlSeconds)
-                : null;
+        // Direct expiresAt takes precedence over ttlSeconds
+        if (builder.expiresAt != null) {
+            this.expiresAt = builder.expiresAt;
+        } else if (builder.ttlSeconds > 0) {
+            this.expiresAt = this.createdAt.plusSeconds(builder.ttlSeconds);
+        } else {
+            this.expiresAt = null;
+        }
         this.addedBy = builder.addedBy;
     }
 
@@ -133,6 +138,7 @@ public class BlacklistEntry {
         private String healedLocatorValue;
         private String reason;
         private long ttlSeconds;
+        private Instant expiresAt;
         private String addedBy;
 
         public Builder id(String id) {
@@ -164,6 +170,11 @@ public class BlacklistEntry {
 
         public Builder ttlSeconds(long ttlSeconds) {
             this.ttlSeconds = ttlSeconds;
+            return this;
+        }
+
+        public Builder expiresAt(Instant expiresAt) {
+            this.expiresAt = expiresAt;
             return this;
         }
 
