@@ -46,8 +46,8 @@ Intent Healer is an intelligent self-healing framework that automatically fixes 
 
 ### Required
 
-- **Java 17+** (LTS recommended)
-- **Gradle 8.0+** or Maven 3.8+
+- **Java 21+** (LTS recommended)
+- **Maven 3.8+**
 - **Selenium WebDriver 4.x**
 - **LLM API Access** (at least one):
   - OpenAI API key, OR
@@ -67,7 +67,6 @@ Intent Healer is an intelligent self-healing framework that automatically fixes 
 
 ### Step 1: Add Dependencies
 
-**Gradle (build.gradle.kts)**
 ```kotlin
 dependencies {
     // Core healing engine
@@ -148,10 +147,10 @@ report:
 Run your existing tests - healing happens automatically when elements aren't found!
 
 ```bash
-./gradlew test
+mvn test
 ```
 
-Check the reports in `build/healer-reports/` after the run.
+Check the reports in `target/healer-reports/` after the run.
 
 ---
 
@@ -661,11 +660,11 @@ public class CustomIntegration {
 
 ## CLI Reference
 
-Install the CLI tool or run via Gradle:
+Install the CLI tool or run via Maven:
 
 ```bash
-# Via Gradle
-./gradlew :healer-cli:run --args="<command>"
+# Via Maven
+mvn -pl healer-cli exec:java -Dexec.args="<command>"
 
 # Or if installed globally
 healer <command>
@@ -1055,12 +1054,12 @@ report:
 Or via environment:
 ```bash
 export HEALER_DEBUG=true
-./gradlew test
+mvn test
 ```
 
 ### Getting Help
 
-1. Check logs in `build/healer-reports/`
+1. Check logs in `target/healer-reports/`
 2. Review heal history in IDE plugin
 3. Run `healer config validate` to check configuration
 4. Enable debug mode for detailed diagnostics

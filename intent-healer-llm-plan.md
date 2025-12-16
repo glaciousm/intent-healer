@@ -2777,7 +2777,7 @@ RECOMMENDATIONS
 
 **Deliverables:**
 
-- Gradle multi-module project structure
+- Maven multi-module project structure
 - Core model classes (FailureContext, IntentContract, HealDecision)
 - Configuration loading infrastructure
 - Logging framework integration
@@ -3130,8 +3130,7 @@ intent-healer/
 │   ├── llm-providers.md
 │   └── troubleshooting.md
 │
-├── build.gradle.kts
-├── settings.gradle.kts
+├── pom.xml
 ├── README.md
 ├── CHANGELOG.md
 └── LICENSE

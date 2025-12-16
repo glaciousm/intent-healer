@@ -1,7 +1,9 @@
-# Gradle
+# Maven
+target/
+
+# Gradle (legacy)
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
 
 # IDE
 .idea/
@@ -30,3 +32,5 @@ logs/
 # Healer cache and reports
 .healer/
 healer-reports/
+/.claude/settings.local.json
+CLAUDE.md

@@ -59,12 +59,18 @@ import java.util.*;
  * <h3>Setting up ONNX Local</h3>
  * <p>For ONNX inference, add the onnxruntime dependency to your project:</p>
  * <pre>{@code
- * // build.gradle.kts
- * dependencies {
- *     implementation("ai.onnxruntime:onnxruntime:1.16.0")
- *     // For GPU support:
- *     // implementation("ai.onnxruntime:onnxruntime_gpu:1.16.0")
- * }
+ * <!-- pom.xml -->
+ * <dependency>
+ *     <groupId>ai.onnxruntime</groupId>
+ *     <artifactId>onnxruntime</artifactId>
+ *     <version>1.16.0</version>
+ * </dependency>
+ * <!-- For GPU support: -->
+ * <!-- <dependency>
+ *     <groupId>ai.onnxruntime</groupId>
+ *     <artifactId>onnxruntime_gpu</artifactId>
+ *     <version>1.16.0</version>
+ * </dependency> -->
  *
  * // Configure the provider
  * FineTunedConfig config = FineTunedConfig.builder("my-onnx-model")
@@ -556,9 +562,13 @@ public class FineTunedModelProvider implements LlmProvider {
             String instructions = """
                 ONNX local inference requires additional setup:
 
-                1. Add dependency to build.gradle.kts:
-                   implementation("ai.onnxruntime:onnxruntime:1.16.0")
-                   // For GPU: implementation("ai.onnxruntime:onnxruntime_gpu:1.16.0")
+                1. Add dependency to pom.xml:
+                   <dependency>
+                       <groupId>ai.onnxruntime</groupId>
+                       <artifactId>onnxruntime</artifactId>
+                       <version>1.16.0</version>
+                   </dependency>
+                   <!-- For GPU: onnxruntime_gpu -->
 
                 2. ONNX inference requires model-specific tokenization logic.
                    Each model has its own tokenizer (BPE, SentencePiece, etc.)
