@@ -6,6 +6,7 @@ import com.intenthealer.core.model.*;
 import com.intenthealer.llm.providers.AnthropicProvider;
 import com.intenthealer.llm.providers.AzureOpenAiProvider;
 import com.intenthealer.llm.providers.BedrockProvider;
+import com.intenthealer.llm.providers.MockLlmProvider;
 import com.intenthealer.llm.providers.OllamaProvider;
 import com.intenthealer.llm.providers.OpenAiProvider;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ public class LlmOrchestrator {
         providers.put("azure-openai", new AzureOpenAiProvider()); // Alias for azure
         providers.put("bedrock", new BedrockProvider());
         providers.put("aws", new BedrockProvider()); // Alias for bedrock
+        providers.put("mock", new MockLlmProvider()); // Mock provider for testing without real LLM
     }
 
     /**

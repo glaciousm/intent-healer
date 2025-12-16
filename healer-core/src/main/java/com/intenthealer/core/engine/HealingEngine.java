@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -174,11 +175,15 @@ public class HealingEngine {
                 }
             }
 
-            // 10. Success!
+            // 10. Success! Generate healed locator from chosen element
+            String healedLocator = generateLocatorFromElement(chosenElement);
+            logger.info("Generated healed locator: {}", healedLocator);
+
             return HealResult.builder()
                     .outcome(HealOutcome.SUCCESS)
                     .decision(decision)
                     .healedElementIndex(decision.getSelectedElementIndex())
+                    .healedLocator(healedLocator)
                     .confidence(decision.getConfidence())
                     .reasoning(decision.getReasoning())
                     .duration(Duration.between(startTime, Instant.now()))
@@ -192,6 +197,102 @@ public class HealingEngine {
                     .duration(Duration.between(startTime, Instant.now()))
                     .build();
         }
+    }
+
+    /**
+     * Generate a locator string from an ElementSnapshot.
+     * Format: "strategy=value" (e.g., "id=login-btn", "css=button.submit")
+     * Prefers id > name > css selector with class.
+     */
+    private String generateLocatorFromElement(ElementSnapshot element) {
+        // Prefer ID if available (but not UUIDs or dynamic IDs)
+        String id = element.getId();
+        if (id != null && !id.isEmpty() && !looksLikeDynamicId(id)) {
+            return "id=" + id;
+        }
+
+        // Try name
+        if (element.getName() != null && !element.getName().isEmpty()) {
+            return "name=" + element.getName();
+        }
+
+        // Build CSS selector
+        StringBuilder css = new StringBuilder();
+        String tagName = element.getTagName() != null ? element.getTagName().toLowerCase() : "div";
+        css.append(tagName);
+
+        // Add classes if available (limit to first 2 to avoid overly specific selectors)
+        List<String> classes = element.getClasses();
+        if (classes != null && !classes.isEmpty()) {
+            int classCount = 0;
+            for (String className : classes) {
+                // Skip dynamic-looking class names
+                if (!looksLikeDynamicClass(className) && classCount < 2) {
+                    css.append(".").append(className.replace(" ", ""));
+                    classCount++;
+                }
+            }
+        }
+
+        // Add type attribute for inputs (only for specific types that are stable)
+        String type = element.getType();
+        if (type != null && !type.isEmpty() && isStableTypeAttribute(tagName, type)) {
+            css.append("[type=\"").append(type).append("\"]");
+        }
+
+        // If we only have a tag name with no distinguishing features, try text content
+        if (css.toString().equals(tagName) && element.getText() != null && !element.getText().isEmpty()) {
+            // For buttons/links, use a more specific selector based on visible text
+            String text = element.getText().trim();
+            if (text.length() <= 30) {
+                // XPath with text content for unique identification
+                return "xpath=//" + tagName + "[contains(text(),'" + escapeXpathText(text) + "')]";
+            }
+        }
+
+        return "css=" + css.toString();
+    }
+
+    /**
+     * Check if an ID looks like a dynamically generated one.
+     */
+    private boolean looksLikeDynamicId(String id) {
+        // UUID patterns, numbers only, or very long IDs
+        return id.matches(".*[0-9a-f]{8}-[0-9a-f]{4}-.*") ||  // UUID pattern
+               id.matches("\\d+") ||                          // Numbers only
+               id.length() > 50 ||                            // Very long IDs
+               id.contains("ember") ||                        // Ember.js generated
+               id.contains("react") ||                        // React generated
+               id.matches(".*\\d{5,}.*");                     // Contains 5+ digit numbers
+    }
+
+    /**
+     * Check if a class name looks dynamically generated.
+     */
+    private boolean looksLikeDynamicClass(String className) {
+        return className.matches(".*[0-9a-f]{6,}.*") ||       // Long hex strings
+               className.matches(".*\\d{4,}.*") ||            // 4+ digit numbers
+               className.contains("_");                        // Often dynamic separators
+    }
+
+    /**
+     * Check if a type attribute is stable and worth including in selector.
+     */
+    private boolean isStableTypeAttribute(String tagName, String type) {
+        if (!"input".equals(tagName)) {
+            return false;
+        }
+        // Only include type for input elements with distinctive types
+        return "checkbox".equals(type) || "radio".equals(type) ||
+               "text".equals(type) || "password".equals(type) ||
+               "email".equals(type) || "number".equals(type);
+    }
+
+    /**
+     * Escape text for use in XPath.
+     */
+    private String escapeXpathText(String text) {
+        return text.replace("'", "\\'");
     }
 
     /**

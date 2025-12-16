@@ -209,11 +209,14 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
                 logger.debug("Captured source location: {}", sourceLocation.toShortString());
             }
 
+            // Use a default stepText if none is set
+            String effectiveStepText = stepText != null ? stepText : "find element: " + by.toString();
+
             FailureContext failureContext = FailureContext.builder()
                     .exceptionType(originalException.getClass().getSimpleName())
                     .exceptionMessage(originalException.getMessage())
                     .originalLocator(originalLocator)
-                    .stepText(stepText)
+                    .stepText(effectiveStepText)
                     .sourceLocation(sourceLocation)
                     .build();
 
@@ -262,11 +265,14 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
                 logger.debug("Captured source location: {}", sourceLocation.toShortString());
             }
 
+            // Use a default stepText if none is set
+            String effectiveStepText = stepText != null ? stepText : "find element: " + by.toString();
+
             FailureContext failureContext = FailureContext.builder()
                     .exceptionType(originalException.getClass().getSimpleName())
                     .exceptionMessage(originalException.getMessage())
                     .originalLocator(originalLocator)
-                    .stepText(stepText)
+                    .stepText(effectiveStepText)
                     .sourceLocation(sourceLocation)
                     .build();
 

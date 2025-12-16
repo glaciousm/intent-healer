@@ -3,8 +3,10 @@ package com.intenthealer.example.config;
 import com.intenthealer.core.config.ConfigLoader;
 import com.intenthealer.core.config.HealerConfig;
 import com.intenthealer.core.engine.HealingEngine;
+import com.intenthealer.core.model.IntentContract;
 import com.intenthealer.llm.LlmOrchestrator;
 import com.intenthealer.selenium.driver.HealingWebDriver;
+import com.intenthealer.selenium.snapshot.SnapshotBuilder;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -48,13 +50,34 @@ public class HealerTestConfig {
         WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
+        // Run in visible mode for testing (not headless)
+        // options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--window-size=1920,1080");
+        options.addArguments("--start-maximized");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--remote-allow-origins=*");
 
         WebDriver chromeDriver = new ChromeDriver(options);
         this.driver = new HealingWebDriver(chromeDriver, healingEngine, config);
+
+        // Configure healing engine with snapshot capture and LLM evaluator
+        SnapshotBuilder snapshotBuilder = new SnapshotBuilder(chromeDriver);
+        healingEngine.setSnapshotCapture(failure -> snapshotBuilder.captureAll());
+        healingEngine.setLlmEvaluator((failure, snapshot) -> {
+            IntentContract intent = IntentContract.defaultContract(failure.getStepText());
+            return llmOrchestrator.evaluateCandidates(failure, snapshot, intent, config.getLlm());
+        });
+
+        System.out.println("=".repeat(60));
+        System.out.println("HealingWebDriver created successfully");
+        System.out.println("Healer mode: " + config.getMode());
+        System.out.println("LLM provider: " + config.getLlm().getProvider());
+        System.out.println("Auto-update enabled: " +
+                (config.getAutoUpdate() != null && config.getAutoUpdate().isEnabled()));
+        System.out.println("=".repeat(60));
+
         return driver;
     }
 

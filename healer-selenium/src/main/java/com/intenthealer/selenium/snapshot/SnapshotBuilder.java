@@ -81,15 +81,10 @@ public class SnapshotBuilder {
 
     private List<ElementSnapshot> captureClickableElements() {
         String script = """
-            return Array.from(document.querySelectorAll(
-                'button, a, [role="button"], [role="link"], input[type="submit"],
-                input[type="button"], [onclick], [ng-click], [data-action], [tabindex]'
-            )).filter(el => {
+            return Array.from(document.querySelectorAll('button, a, [role="button"], [role="link"], input[type="submit"], input[type="button"], [onclick], [ng-click], [data-action], [tabindex]')).filter(el => {
                 const rect = el.getBoundingClientRect();
                 const style = window.getComputedStyle(el);
-                return rect.width > 0 && rect.height > 0 &&
-                       style.visibility !== 'hidden' &&
-                       style.display !== 'none';
+                return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
             }).slice(0, %d);
             """.formatted(config.getMaxElements());
 
@@ -98,15 +93,10 @@ public class SnapshotBuilder {
 
     private List<ElementSnapshot> captureInputElements() {
         String script = """
-            return Array.from(document.querySelectorAll(
-                'input:not([type="hidden"]):not([type="submit"]):not([type="button"]),
-                textarea, [contenteditable="true"]'
-            )).filter(el => {
+            return Array.from(document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, [contenteditable="true"]')).filter(el => {
                 const rect = el.getBoundingClientRect();
                 const style = window.getComputedStyle(el);
-                return rect.width > 0 && rect.height > 0 &&
-                       style.visibility !== 'hidden' &&
-                       style.display !== 'none';
+                return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
             }).slice(0, %d);
             """.formatted(config.getMaxElements());
 
@@ -115,14 +105,10 @@ public class SnapshotBuilder {
 
     private List<ElementSnapshot> captureSelectElements() {
         String script = """
-            return Array.from(document.querySelectorAll(
-                'select, [role="listbox"], [role="combobox"]'
-            )).filter(el => {
+            return Array.from(document.querySelectorAll('select, [role="listbox"], [role="combobox"]')).filter(el => {
                 const rect = el.getBoundingClientRect();
                 const style = window.getComputedStyle(el);
-                return rect.width > 0 && rect.height > 0 &&
-                       style.visibility !== 'hidden' &&
-                       style.display !== 'none';
+                return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
             }).slice(0, %d);
             """.formatted(config.getMaxElements());
 
@@ -131,15 +117,10 @@ public class SnapshotBuilder {
 
     private List<ElementSnapshot> captureAllInteractiveElements() {
         String script = """
-            return Array.from(document.querySelectorAll(
-                'button, a, input, select, textarea, [role="button"], [role="link"],
-                [role="listbox"], [role="combobox"], [onclick], [tabindex]:not([tabindex="-1"])'
-            )).filter(el => {
+            return Array.from(document.querySelectorAll('button, a, input, select, textarea, [role="button"], [role="link"], [role="listbox"], [role="combobox"], [onclick], [tabindex]:not([tabindex="-1"])')).filter(el => {
                 const rect = el.getBoundingClientRect();
                 const style = window.getComputedStyle(el);
-                const isVisible = rect.width > 0 && rect.height > 0 &&
-                                  style.visibility !== 'hidden' &&
-                                  style.display !== 'none';
+                const isVisible = rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
                 const isHidden = el.type === 'hidden';
                 return isVisible && !isHidden;
             }).slice(0, %d);
@@ -263,7 +244,7 @@ public class SnapshotBuilder {
 
             // Check for associated label
             if (el.id) {
-                const label = document.querySelector(`label[for="${el.id}"]`);
+                const label = document.querySelector('label[for="' + el.id + '"]');
                 if (label) labels.push(label.textContent.trim());
             }
 

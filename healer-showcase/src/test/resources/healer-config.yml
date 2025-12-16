@@ -1,4 +1,4 @@
-# Intent Healer Configuration - Herokuapp Login Test
+# Intent Healer Configuration - Showcase Demo
 # Uses Mock LLM (heuristic-based, no external LLM required)
 
 healer:
@@ -6,36 +6,25 @@ healer:
   mode: AUTO_SAFE
   enabled: true
 
-  # LLM Provider Configuration - Using Mock (heuristic-based, no external LLM required)
+  # LLM Provider Configuration - Using Mock (heuristic-based)
   llm:
     provider: mock
     model: heuristic
     timeout_seconds: 60
     max_retries: 2
 
-  # Auto-Update Configuration - THE FEATURE WE'RE TESTING
+  # Auto-Update Configuration (disabled for showcase)
   auto_update:
-    enabled: true
-    min_confidence: 0.80
-    require_test_pass: true
-    backup_enabled: true
-    backup_dir: .healer/backups
-    dry_run: false
-    exclude_patterns:
-      - "**/target/**"
-      - "**/*.class"
+    enabled: false
 
   # Guardrails Configuration
   guardrails:
     min_confidence: 0.75
-    max_heals_per_scenario: 5
-    forbidden_keywords:
-      - delete
-      - remove
-      - cancel
+    max_heals_per_scenario: 10
     forbidden_url_patterns:
       - /admin/
-      - /settings/delete
+      - /delete/
+      - /payment/
 
   # Caching Configuration - DISABLED to force healing on every run
   cache:
@@ -47,17 +36,16 @@ healer:
   snapshot:
     max_elements: 100
     include_hidden: false
-    capture_screenshot: true
+    capture_screenshot: false
 
   # Reporting Configuration
   report:
     enabled: true
-    output_dir: ./healer-reports
+    output_dir: ./target/healer-reports
     formats:
       - json
       - html
-    include_screenshots: true
 
-  # Circuit Breaker - Disabled for testing
+  # Circuit Breaker - Disabled for demo
   circuit_breaker:
     enabled: false

@@ -109,6 +109,32 @@ public class HealingWebElement implements WebElement {
         return executeWithRetry(() -> delegate.getScreenshotAs(target));
     }
 
+    // Selenium 4 methods
+    @Override
+    public String getDomAttribute(String name) {
+        return executeWithRetry(() -> delegate.getDomAttribute(name));
+    }
+
+    @Override
+    public String getDomProperty(String name) {
+        return executeWithRetry(() -> delegate.getDomProperty(name));
+    }
+
+    @Override
+    public SearchContext getShadowRoot() {
+        return executeWithRetry(() -> delegate.getShadowRoot());
+    }
+
+    @Override
+    public String getAriaRole() {
+        return executeWithRetry(() -> delegate.getAriaRole());
+    }
+
+    @Override
+    public String getAccessibleName() {
+        return executeWithRetry(() -> delegate.getAccessibleName());
+    }
+
     /**
      * Execute an action with automatic retry on stale element exception.
      */
