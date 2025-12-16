@@ -169,6 +169,23 @@ After each test run, a summary is printed showing all healed locators:
 
 This helps you quickly identify and fix broken locators in your source code.
 
+### Cucumber HTML Report
+
+A dedicated HTML report is also generated with:
+- Interactive expandable heal details
+- Copy-to-clipboard buttons for healed locators
+- Scenario-by-scenario summary
+- Confidence scores and statistics
+
+Add the report plugin to your Cucumber runner:
+
+```java
+@ConfigurationParameter(
+    key = PLUGIN_PROPERTY_NAME,
+    value = "com.intenthealer.cucumber.report.HealerCucumberReportPlugin:target/healer-report.html"
+)
+```
+
 ---
 
 ## Configuration Options

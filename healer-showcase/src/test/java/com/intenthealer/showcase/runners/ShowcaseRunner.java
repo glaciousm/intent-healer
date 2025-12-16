@@ -23,7 +23,7 @@ import static io.cucumber.junit.platform.engine.Constants.*;
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.intenthealer.showcase.steps,com.intenthealer.showcase.hooks")
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty,html:target/cucumber-reports/showcase.html,json:target/cucumber-reports/showcase.json")
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty,html:target/cucumber-reports/showcase.html,json:target/cucumber-reports/showcase.json,com.intenthealer.cucumber.report.HealerCucumberReportPlugin:target/healer-report.html")
 @ConfigurationParameter(key = SNIPPET_TYPE_PROPERTY_NAME, value = "camelcase")
 @ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@showcase")
 public class ShowcaseRunner {

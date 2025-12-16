@@ -126,6 +126,20 @@ After tests complete, a summary shows exactly what was healed:
 
 This actionable output helps you update your source code with the correct locators.
 
+### HTML Reports
+
+After test execution, two HTML reports are generated:
+
+1. **`target/healer-report.html`** - Intent Healer report showing:
+   - Summary statistics (scenarios, heals, pass rate)
+   - All healed locators with copy-to-clipboard buttons
+   - Scenario-by-scenario breakdown
+   - Confidence scores for each heal
+
+2. **`target/cucumber-reports/showcase.html`** - Standard Cucumber report
+
+Open the healer report in a browser to review and copy healed locators for your Page Objects.
+
 | Test | Wrong Locator | Real Element | Healed? |
 |------|---------------|--------------|---------|
 | 1 | `By.id("login-btn")` | `<button class="radius">` | ✅ |
