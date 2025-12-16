@@ -306,7 +306,7 @@ intent-healer/
 
 ## Requirements
 
-- Java 17+
+- Java 21+
 - Maven 3.8+
 - Chrome browser (for Selenium tests)
 - Optional: Ollama for local LLM

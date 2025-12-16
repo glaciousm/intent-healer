@@ -265,7 +265,7 @@ healer-showcase/
 
 ### Prerequisites
 
-1. **Java 17+** installed
+1. **Java 21+** installed
 2. **Maven 3.8+** installed
 3. **Chrome browser** installed
 4. **Intent Healer** project built
