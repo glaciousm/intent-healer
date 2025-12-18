@@ -56,6 +56,7 @@
         <module>healer-testng</module>
         <module>healer-junit</module>
         <module>healer-showcase</module>
+        <module>healer-benchmark</module>
         <!-- healer-intellij requires IntelliJ SDK - build separately with Gradle or activate with -Pbuild-intellij-plugin -->
     </modules>
 

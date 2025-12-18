@@ -3,6 +3,8 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://openjdk.org/)
 [![Maven Central](https://img.shields.io/badge/Maven_Central-coming_soon-lightgrey.svg)]()
+[![Heal Success](https://img.shields.io/badge/Heal_Success-TBD-lightgrey.svg)]()
+[![False Heal Rate](https://img.shields.io/badge/False_Heal-TBD-lightgrey.svg)]()
 
 > **Self-Healing Selenium Tests with AI-Powered Locator Recovery**
 
@@ -110,6 +112,7 @@ See the [User Guide](docs/USER_GUIDE.md#java-agent-zero-code-integration) for de
 | `healer-cli` | Command-line interface for config/cache/reports |
 | `healer-intellij` | IntelliJ IDEA plugin for heal history |
 | `healer-showcase` | Demo project with 10 self-healing test examples |
+| `healer-benchmark` | Benchmark suite with 35 scenarios to measure healing accuracy |
 
 ---
 
@@ -179,6 +182,59 @@ mvn test -pl healer-showcase
 | ... | ... | ... | ... |
 
 See [healer-showcase/README.md](healer-showcase/README.md) for complete details.
+
+---
+
+## Benchmarks
+
+The `healer-benchmark` module provides a comprehensive suite of 35 scenarios to measure healing accuracy across different types of DOM changes.
+
+### Running Benchmarks
+
+```bash
+# Run with mock provider (no API keys needed)
+mvn exec:java -pl healer-benchmark
+
+# Run with specific LLM provider
+mvn exec:java -pl healer-benchmark -Dexec.args="--provider ollama --model llama3.2"
+mvn exec:java -pl healer-benchmark -Dexec.args="--provider openai --model gpt-4o-mini"
+mvn exec:java -pl healer-benchmark -Dexec.args="--provider anthropic --model claude-3-haiku"
+
+# Custom output directory
+mvn exec:java -pl healer-benchmark -Dexec.args="--output ./my-results"
+```
+
+### Benchmark Categories (35 Scenarios)
+
+| Category | Scenarios | Description |
+|----------|-----------|-------------|
+| Locator Changes | 1-10 | ID, class, XPath, CSS selector, name, data-testid, aria-label changes |
+| Element Type Changes | 11-16 | Button→Link, Input→Textarea, Select→Custom dropdown |
+| Text/Content Changes | 17-21 | Button text, placeholder, label, translation, truncation |
+| Negative Tests | 22-27 | Element removed, wrong page, ambiguous, destructive, forbidden |
+| False Heal Detection | 28-32 | Wrong button, sibling, parent, wrong criteria, outcome fails |
+| Complex DOM | 33-35 | Shadow DOM, iframe, dynamic content |
+
+### Sample Output
+
+```
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    INTENT HEALER - BENCHMARK RESULTS                       ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║  Provider: ollama              Model: llama3.2                             ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║  Total:  35  │  Passed:  33  │  Failed:   2  │  Pass Rate:  94.3%          ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║  Heal Success Rate:  95.2%   │  False Heal Rate:   2.1%                    ║
+║  Refusal Accuracy:   91.7%   │  Avg Cost/Heal:   $0.0012                   ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║  Latency - P50:   450ms  │  P90:   890ms  │  P99:  1250ms                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+```
+
+Reports are generated in JSON and Markdown format in `target/benchmark-results/`.
+
+---
 
 ### Healing Summary
 
