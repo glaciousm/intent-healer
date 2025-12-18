@@ -38,7 +38,7 @@ healer:
   snapshot:
     max_elements: 100
     include_hidden: false
-    capture_screenshot: false
+    capture_screenshot: true
 
   # Reporting Configuration
   report:

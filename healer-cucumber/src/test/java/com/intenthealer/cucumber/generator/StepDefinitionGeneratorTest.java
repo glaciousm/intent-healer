@@ -217,7 +217,8 @@ class StepDefinitionGeneratorTest {
 
         assertThat(result.stepDefinitionCode())
                 .contains("I enter \"{string}\" and \"{string}\" to login");
-        assertThat(result.stepDefinitionCode()).contains("String param0, String param1");
+        // "password123" contains "pass" so it's inferred as "password"
+        assertThat(result.stepDefinitionCode()).contains("String param0, String password");
     }
 
     // ===== Test pattern generation =====

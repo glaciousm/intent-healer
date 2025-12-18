@@ -44,7 +44,7 @@ class HealCacheTest {
 
         Optional<LocatorInfo> retrieved = cache.get(key);
         assertTrue(retrieved.isPresent());
-        assertEquals("css", retrieved.get().getStrategy());
+        assertEquals(LocatorInfo.LocatorStrategy.CSS, retrieved.get().getStrategy());
         assertEquals("button[type='submit']", retrieved.get().getValue());
     }
 

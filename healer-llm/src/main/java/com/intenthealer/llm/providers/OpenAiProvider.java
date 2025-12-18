@@ -105,7 +105,12 @@ public class OpenAiProvider implements LlmProvider {
                 try (Response response = client.newCall(request).execute()) {
                     if (!response.isSuccessful()) {
                         String errorBody = response.body() != null ? response.body().string() : "unknown";
-                        throw new LlmException(SecurityUtils.sanitizeErrorMessage("OpenAI API error: " + response.code() + " - " + errorBody),
+                        int statusCode = response.code();
+                        // Retry on server errors (5xx), throw immediately on client errors (4xx)
+                        if (statusCode >= 500) {
+                            throw new IOException("Server error: " + statusCode + " - " + errorBody);
+                        }
+                        throw new LlmException(SecurityUtils.sanitizeErrorMessage("OpenAI API error: " + statusCode + " - " + errorBody),
                                 getProviderName(), config.getModel());
                     }
 
@@ -150,7 +155,11 @@ public class OpenAiProvider implements LlmProvider {
 
     private String getApiKey(LlmConfig config) {
         String envVar = config.getApiKeyEnv() != null ? config.getApiKeyEnv() : "OPENAI_API_KEY";
+        // Check environment variable first, then system property (for tests)
         String apiKey = System.getenv(envVar);
+        if (apiKey == null || apiKey.isEmpty()) {
+            apiKey = System.getProperty(envVar);
+        }
         if (apiKey == null || apiKey.isEmpty()) {
             throw new LlmException("API key not found. Set " + envVar + " environment variable.",
                     getProviderName(), config.getModel());

@@ -482,11 +482,12 @@ public class StepDefinitionGenerator {
     }
 
     private String toClassName(String text) {
-        return Arrays.stream(text.split("[\\s_-]+"))
-                .map(word -> word.isEmpty() ? "" :
-                        Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
-                .collect(Collectors.joining())
-                .replaceAll("[^a-zA-Z0-9]", "");
+        // First replace special characters with spaces so they become word separators
+        String normalized = text.replaceAll("[^a-zA-Z0-9\\s_-]", " ");
+        return Arrays.stream(normalized.split("[\\s_-]+"))
+                .filter(word -> !word.isEmpty())
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
+                .collect(Collectors.joining());
     }
 
     private String toMethodName(String text) {

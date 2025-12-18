@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.openqa.selenium.*;
 
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class SnapshotBuilderTest {
 
     @Mock
@@ -44,6 +47,42 @@ class SnapshotBuilderTest {
 
         config = new SnapshotConfig();
         snapshotBuilder = new SnapshotBuilder(mockDriver, config);
+    }
+
+    /**
+     * Sets up default stubs for executeScript to handle different script types.
+     * This prevents ClassCastException when scripts return different types.
+     */
+    private void setupDefaultExecuteScriptStubs(List<WebElement> elementsToReturn) {
+        // One-argument executeScript (for element capture, language detection, DOM capture)
+        when(((JavascriptExecutor) mockDriver).executeScript(anyString())).thenAnswer(invocation -> {
+            String script = invocation.getArgument(0);
+            if (script.contains("document.documentElement.lang")) {
+                return "en";  // Language detection returns String
+            }
+            if (script.contains("document.documentElement.outerHTML")) {
+                return "<html></html>";  // DOM capture returns String
+            }
+            if (script.contains("document.querySelectorAll")) {
+                return elementsToReturn;  // Element capture returns List<WebElement>
+            }
+            return new ArrayList<>();  // Default: return empty list
+        });
+
+        // Two-argument executeScript (for container, labels, data attributes)
+        when(((JavascriptExecutor) mockDriver).executeScript(anyString(), any())).thenAnswer(invocation -> {
+            String script = invocation.getArgument(0);
+            if (script.contains("parentElement")) {
+                return "body";  // Container finding returns String
+            }
+            if (script.contains("label")) {
+                return new ArrayList<String>();  // Nearby labels returns List<String>
+            }
+            if (script.contains("data-")) {
+                return new HashMap<String, String>();  // Data attributes returns Map
+            }
+            return null;
+        });
     }
 
     // ===== Test snapshot capture with mocked WebDriver =====
@@ -96,6 +135,7 @@ class SnapshotBuilderTest {
                 .actionType(ActionType.CLICK)
                 .exceptionType("NoSuchElementException")
                 .exceptionMessage("Element not found")
+                .stepText("Click the login button")
                 .build();
 
         List<WebElement> mockElements = List.of(mockElement);
@@ -121,6 +161,7 @@ class SnapshotBuilderTest {
                 .actionType(ActionType.TYPE)
                 .exceptionType("NoSuchElementException")
                 .exceptionMessage("Input not found")
+                .stepText("Enter username")
                 .build();
 
         List<WebElement> mockElements = List.of(mockElement);
@@ -147,6 +188,7 @@ class SnapshotBuilderTest {
                 .actionType(ActionType.SELECT)
                 .exceptionType("NoSuchElementException")
                 .exceptionMessage("Select not found")
+                .stepText("Select country")
                 .build();
 
         List<WebElement> mockElements = List.of(mockElement);
@@ -262,7 +304,8 @@ class SnapshotBuilderTest {
                 .thenReturn(mockElements);
 
         setupMockElement(mockElement, "button", "test", "Click");
-        when(mockElement.getRect()).thenReturn(new Rectangle(10, 20, 100, 50));
+        // Rectangle constructor: (x, y, height, width)
+        when(mockElement.getRect()).thenReturn(new Rectangle(10, 20, 50, 100));
 
         UiSnapshot snapshot = snapshotBuilder.captureAll();
 
@@ -280,20 +323,25 @@ class SnapshotBuilderTest {
     void captureElement_findsContainer() {
         when(mockDriver.getCurrentUrl()).thenReturn("https://example.com");
         when(mockDriver.getTitle()).thenReturn("Test");
+
+        // Stub for language detection
         when(((JavascriptExecutor) mockDriver).executeScript(contains("document.documentElement.lang")))
                 .thenReturn("en");
 
+        // Stub for element capture - must be more specific than anyString
         List<WebElement> mockElements = List.of(mockElement);
-        when(((JavascriptExecutor) mockDriver).executeScript(contains("document.querySelectorAll")))
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("querySelectorAll")))
                 .thenReturn(mockElements);
 
         setupMockElement(mockElement, "button", "test", "Submit");
 
-        // Mock container script
-        when(((JavascriptExecutor) mockDriver).executeScript(
-                argThat((String script) -> script.contains("parentElement")),
-                eq(mockElement)
-        )).thenReturn("FORM#login-form");
+        // Two-argument stubs for element details
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("parentElement"), any()))
+                .thenReturn("FORM#login-form");
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("label"), any()))
+                .thenReturn(new ArrayList<String>());
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("data-"), any()))
+                .thenReturn(new HashMap<String, String>());
 
         UiSnapshot snapshot = snapshotBuilder.captureAll();
 
@@ -307,21 +355,26 @@ class SnapshotBuilderTest {
     void captureElement_findsNearbyLabels() {
         when(mockDriver.getCurrentUrl()).thenReturn("https://example.com");
         when(mockDriver.getTitle()).thenReturn("Test");
+
+        // Stub for language detection
         when(((JavascriptExecutor) mockDriver).executeScript(contains("document.documentElement.lang")))
                 .thenReturn("en");
 
+        // Stub for element capture
         List<WebElement> mockElements = List.of(mockElement);
-        when(((JavascriptExecutor) mockDriver).executeScript(contains("document.querySelectorAll")))
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("querySelectorAll")))
                 .thenReturn(mockElements);
 
         setupMockElement(mockElement, "input", "username", null);
 
-        // Mock nearby labels script
+        // Two-argument stubs for element details
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("parentElement"), any()))
+                .thenReturn("body");
         List<String> labels = List.of("Username:", "Email or Username");
-        when(((JavascriptExecutor) mockDriver).executeScript(
-                argThat((String script) -> script.contains("label")),
-                eq(mockElement)
-        )).thenReturn(labels);
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("label"), any()))
+                .thenReturn(labels);
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("data-"), any()))
+                .thenReturn(new HashMap<String, String>());
 
         UiSnapshot snapshot = snapshotBuilder.captureAll();
 
@@ -411,11 +464,13 @@ class SnapshotBuilderTest {
                 .actionType(ActionType.CLICK)
                 .exceptionType("NoSuchElementException")
                 .exceptionMessage("Not found")
+                .stepText("Click submit button")
                 .build();
 
         UiSnapshot snapshot = snapshotBuilder.capture(failure);
 
-        assertThat(snapshot.getScreenshotBase64()).isEqualTo("base64data");
+        assertThat(snapshot.getScreenshotBase64()).isPresent();
+        assertThat(snapshot.getScreenshotBase64().get()).isEqualTo("base64data");
     }
 
     @Test
@@ -428,7 +483,7 @@ class SnapshotBuilderTest {
         when(mockDriver.getTitle()).thenReturn("Test");
         when(((JavascriptExecutor) mockDriver).executeScript(contains("document.documentElement.lang")))
                 .thenReturn("en");
-        when(((JavascriptExecutor) mockDriver).executeScript(contains("document.querySelectorAll")))
+        when(((JavascriptExecutor) mockDriver).executeScript(contains("querySelectorAll")))
                 .thenReturn(new ArrayList<>());
         when(((TakesScreenshot) mockDriver).getScreenshotAs(OutputType.BASE64))
                 .thenThrow(new WebDriverException("Screenshot failed"));
@@ -437,11 +492,12 @@ class SnapshotBuilderTest {
                 .actionType(ActionType.CLICK)
                 .exceptionType("NoSuchElementException")
                 .exceptionMessage("Not found")
+                .stepText("Click submit button")
                 .build();
 
         UiSnapshot snapshot = snapshotBuilder.capture(failure);
 
-        assertThat(snapshot.getScreenshotBase64()).isNull();
+        assertThat(snapshot.getScreenshotBase64()).isEmpty();
     }
 
     // ===== Test DOM capture =====
@@ -465,11 +521,13 @@ class SnapshotBuilderTest {
                 .actionType(ActionType.CLICK)
                 .exceptionType("NoSuchElementException")
                 .exceptionMessage("Not found")
+                .stepText("Click submit button")
                 .build();
 
         UiSnapshot snapshot = snapshotBuilder.capture(failure);
 
-        assertThat(snapshot.getDomSnapshot()).isEqualTo("<html><body>Test</body></html>");
+        assertThat(snapshot.getDomSnapshot()).isPresent();
+        assertThat(snapshot.getDomSnapshot().get()).isEqualTo("<html><body>Test</body></html>");
     }
 
     // ===== Test max elements limit =====

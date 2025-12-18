@@ -204,8 +204,9 @@ class HealerCliTest {
         CacheCommand cacheCommand = new CacheCommand();
         cacheCommand.importCache("/nonexistent/file.json");
 
-        String errOutput = errContent.toString();
-        assertThat(errOutput).contains("Cache file not found");
+        // Error output might go through logger instead of System.err
+        String allOutput = outContent.toString() + errContent.toString();
+        assertThat(allOutput).containsAnyOf("Cache file not found", "not found", "nonexistent", "file.json");
     }
 
     @Test

@@ -10,8 +10,10 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,9 +41,10 @@ class IframeHandlerTest {
 
     @BeforeEach
     void setUp() {
-        when(driver.switchTo()).thenReturn(targetLocator);
-        when(targetLocator.defaultContent()).thenReturn(driver);
-        when(targetLocator.parentFrame()).thenReturn(driver);
+        // Use lenient stubs for setup methods that may not be used in all tests
+        lenient().when(driver.switchTo()).thenReturn(targetLocator);
+        lenient().when(targetLocator.defaultContent()).thenReturn(driver);
+        lenient().when(targetLocator.parentFrame()).thenReturn(driver);
         handler = new IframeHandler(driver);
     }
 
@@ -65,21 +68,26 @@ class IframeHandlerTest {
         // Given
         By locator = By.id("nested-element");
 
-        // Element not in main document
-        when(driver.findElement(locator)).thenThrow(new NoSuchElementException("Not found"));
+        // Set up switchTo chain
+        when(driver.switchTo()).thenReturn(targetLocator);
 
-        // Setup iframes
-        when(driver.findElements(By.tagName("iframe"))).thenReturn(List.of(iframe1));
-        when(driver.findElements(By.tagName("frame"))).thenReturn(List.of());
+        // Element not in main document initially
+        when(driver.findElement(locator))
+                .thenThrow(new NoSuchElementException("Not found"))
+                .thenReturn(targetElement);
+
+        // Setup iframes - must return NEW mutable list each time since implementation modifies it
+        when(driver.findElements(By.tagName("iframe"))).thenAnswer(inv -> new ArrayList<>(List.of(iframe1)));
+        when(driver.findElements(By.tagName("frame"))).thenAnswer(inv -> new ArrayList<>());
 
         // After switching to iframe1, element is found
         when(targetLocator.frame(0)).thenReturn(driver);
-        doReturn(targetElement).when(driver).findElement(locator);
+        when(targetLocator.defaultContent()).thenReturn(driver);
 
-        // When - simulate finding in iframe
-        // The actual search will happen after frame switch
+        // When
+        Optional<IframeHandler.ElementInFrame> result = handler.findElementAcrossFrames(locator);
 
-        // Then
+        // Then - verify switching was attempted
         verify(driver, atLeastOnce()).switchTo();
     }
 
@@ -132,9 +140,16 @@ class IframeHandlerTest {
 
     @Test
     void getAllIframes_returnsIframeList() {
-        // Given
-        when(driver.findElements(By.tagName("iframe"))).thenReturn(List.of(iframe1, iframe2));
-        when(driver.findElements(By.tagName("frame"))).thenReturn(List.of());
+        // Use counter to prevent infinite recursion - return iframes only on first call
+        AtomicInteger iframeCallCount = new AtomicInteger(0);
+        when(driver.findElements(By.tagName("iframe"))).thenAnswer(inv -> {
+            int count = iframeCallCount.getAndIncrement();
+            if (count == 0) {
+                return new ArrayList<>(List.of(iframe1, iframe2));
+            }
+            return new ArrayList<>(); // Return empty for recursive calls inside iframes
+        });
+        when(driver.findElements(By.tagName("frame"))).thenAnswer(inv -> new ArrayList<>());
 
         when(iframe1.getAttribute("id")).thenReturn("frame1");
         when(iframe1.getAttribute("name")).thenReturn("frame1-name");
@@ -178,8 +193,9 @@ class IframeHandlerTest {
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of("found-in-iframe"));
 
-        when(driver.findElements(By.tagName("iframe"))).thenReturn(List.of(iframe1));
-        when(driver.findElements(By.tagName("frame"))).thenReturn(List.of());
+        // Must return NEW mutable list each time since implementation modifies it
+        when(driver.findElements(By.tagName("iframe"))).thenAnswer(inv -> new ArrayList<>(List.of(iframe1)));
+        when(driver.findElements(By.tagName("frame"))).thenAnswer(inv -> new ArrayList<>());
         when(targetLocator.frame(0)).thenReturn(driver);
 
         // When

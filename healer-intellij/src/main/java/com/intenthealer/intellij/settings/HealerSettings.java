@@ -27,6 +27,11 @@ public class HealerSettings implements PersistentStateComponent<HealerSettings> 
     public boolean persistHealHistory = true;
     public int maxHistoryEntries = 1000;
 
+    // Real-time watching settings
+    public String healReportsDirectory = "target/healer-reports";
+    public boolean enableRealTimeWatching = true;
+    public int watchPollingIntervalSeconds = 5;
+
     // Trust settings
     public boolean showTrustLevel = true;
     public boolean warnOnLowConfidence = true;

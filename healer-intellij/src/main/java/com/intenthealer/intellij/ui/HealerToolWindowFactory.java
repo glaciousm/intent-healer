@@ -21,6 +21,12 @@ public class HealerToolWindowFactory implements ToolWindowFactory, DumbAware {
                 .createContent(dashboardPanel, "Dashboard", false);
         toolWindow.getContentManager().addContent(dashboardContent);
 
+        // Create live events panel (real-time monitoring)
+        LiveEventsPanel liveEventsPanel = new LiveEventsPanel(project);
+        Content liveContent = ContentFactory.getInstance()
+                .createContent(liveEventsPanel, "Live", false);
+        toolWindow.getContentManager().addContent(liveContent);
+
         // Create history panel
         HealHistoryPanel historyPanel = new HealHistoryPanel(project);
         Content historyContent = ContentFactory.getInstance()

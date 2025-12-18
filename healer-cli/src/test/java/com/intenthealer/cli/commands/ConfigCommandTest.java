@@ -60,7 +60,8 @@ class ConfigCommandTest {
 
         String output = outContent.toString();
         // LLM section may or may not be present depending on defaults
-        assertThat(output).contains("═══════════════════════════════════════════════════════════════");
+        // CLI uses simple ASCII box-drawing (===) instead of Unicode (═══)
+        assertThat(output).contains("===================================================================");
     }
 
     @Test
@@ -222,8 +223,8 @@ class ConfigCommandTest {
         configCommand.show();
 
         String output = outContent.toString();
-        // Check for proper formatting
-        assertThat(output).contains("═══");  // Box characters
+        // Check for proper formatting - CLI uses ASCII (===) instead of Unicode (═══)
+        assertThat(output).contains("===");
         assertThat(output).contains("Mode:");
         assertThat(output).contains("Enabled:");
     }

@@ -142,11 +142,8 @@ class ShadowDomHandlerTest {
 
     @Test
     void buildShadowPiercingLocator_withPath() {
-        // Given
+        // Given - only stub what's needed for id-based selector
         when(shadowHost.getAttribute("id")).thenReturn("host-id");
-        when(shadowHost.getAttribute("class")).thenReturn(null);
-        when(shadowHost.getTagName()).thenReturn("custom-element");
-
         when(targetElement.getAttribute("id")).thenReturn("target-id");
 
         // When

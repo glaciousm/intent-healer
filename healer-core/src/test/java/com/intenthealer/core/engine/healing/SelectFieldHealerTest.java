@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +53,13 @@ class SelectFieldHealerTest {
         when(driver.findElements(By.tagName("select"))).thenReturn(List.of(selectElement));
         when(driver.findElements(By.cssSelector("label[for='country-select']"))).thenReturn(List.of(labelElement));
         when(labelElement.getText()).thenReturn("Country");
+        // Mock custom dropdown queries - return empty for all patterns
+        when(driver.findElements(By.cssSelector("[role='listbox'], [role='combobox']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[class*='dropdown']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[class*='select']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[class*='combo']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[data-testid*='select']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[data-testid*='dropdown']"))).thenReturn(List.of());
 
         HealingRequest request = HealingRequest.builder()
                 .intentDescription("Select country from dropdown")
@@ -71,6 +79,13 @@ class SelectFieldHealerTest {
         setupMockSelect(selectElement, "lang", "language", "Select Language");
         when(driver.findElements(By.tagName("select"))).thenReturn(List.of(selectElement));
         when(driver.findElements(By.cssSelector("label[for='lang']"))).thenReturn(List.of());
+        // Mock custom dropdown queries - return empty for all patterns
+        when(driver.findElements(By.cssSelector("[role='listbox'], [role='combobox']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[class*='dropdown']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[class*='select']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[class*='combo']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[data-testid*='select']"))).thenReturn(List.of());
+        when(driver.findElements(By.cssSelector("[data-testid*='dropdown']"))).thenReturn(List.of());
 
         HealingRequest request = HealingRequest.builder()
                 .intentDescription("Choose language preference")
@@ -85,18 +100,15 @@ class SelectFieldHealerTest {
 
     @Test
     void findMatchingOption_exactMatch() {
-        // Given
+        // Given - only stub options that will be checked before finding Canada
         when(selectElement.getTagName()).thenReturn("select");
-        when(selectElement.findElements(By.tagName("option"))).thenReturn(List.of(option1, option2, option3));
+        when(selectElement.findElements(By.tagName("option"))).thenReturn(List.of(option1, option2));
 
         when(option1.getText()).thenReturn("United States");
         when(option1.getAttribute("value")).thenReturn("US");
 
         when(option2.getText()).thenReturn("Canada");
         when(option2.getAttribute("value")).thenReturn("CA");
-
-        when(option3.getText()).thenReturn("United Kingdom");
-        when(option3.getAttribute("value")).thenReturn("UK");
 
         // When
         Optional<WebElement> result = healer.findMatchingOption(driver, selectElement, "Canada");
@@ -179,13 +191,18 @@ class SelectFieldHealerTest {
     }
 
     private void setupMockSelect(WebElement element, String id, String name, String ariaLabel) {
-        when(element.getAttribute("id")).thenReturn(id);
-        when(element.getAttribute("name")).thenReturn(name);
-        when(element.getAttribute("aria-label")).thenReturn(ariaLabel);
-        when(element.getAttribute("class")).thenReturn("form-select");
-        when(element.getTagName()).thenReturn("select");
-        when(element.isDisplayed()).thenReturn(true);
-        when(element.isEnabled()).thenReturn(true);
-        when(element.findElements(By.tagName("option"))).thenReturn(List.of());
+        // Use lenient for attributes that may not be accessed in all tests
+        lenient().when(element.getAttribute("id")).thenReturn(id);
+        lenient().when(element.getAttribute("name")).thenReturn(name);
+        lenient().when(element.getAttribute("aria-label")).thenReturn(ariaLabel);
+        lenient().when(element.getAttribute("aria-labelledby")).thenReturn(null);
+        lenient().when(element.getAttribute("role")).thenReturn(null);
+        lenient().when(element.getAttribute("data-testid")).thenReturn(null);
+        lenient().when(element.getAttribute("class")).thenReturn("form-select");
+        lenient().when(element.getTagName()).thenReturn("select");
+        lenient().when(element.getText()).thenReturn("");
+        lenient().when(element.isDisplayed()).thenReturn(true);
+        lenient().when(element.isEnabled()).thenReturn(true);
+        lenient().when(element.findElements(By.tagName("option"))).thenReturn(List.of());
     }
 }

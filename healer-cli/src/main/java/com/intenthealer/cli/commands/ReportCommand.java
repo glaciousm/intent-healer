@@ -1,6 +1,7 @@
 package com.intenthealer.cli.commands;
 
 import com.intenthealer.cli.util.CliOutput;
+import com.intenthealer.report.ExportService;
 import com.intenthealer.report.ReportGenerator;
 import com.intenthealer.report.model.HealEvent;
 import com.intenthealer.report.model.HealReport;
@@ -23,9 +24,11 @@ public class ReportCommand {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private final ReportGenerator reportGenerator;
+    private final ExportService exportService;
 
     public ReportCommand(ReportGenerator reportGenerator) {
         this.reportGenerator = reportGenerator;
+        this.exportService = new ExportService();
     }
 
     /**
@@ -200,5 +203,143 @@ public class ReportCommand {
     private String truncate(String text, int maxLen) {
         if (text == null) return "";
         return text.length() > maxLen ? text.substring(0, maxLen - 3) + "..." : text;
+    }
+
+    /**
+     * Export reports to CSV format.
+     */
+    public void exportCsv(String reportDir, String outputPath) throws IOException {
+        Path dirPath = Path.of(reportDir);
+        if (!Files.exists(dirPath)) {
+            CliOutput.error("Report directory not found: " + reportDir);
+            return;
+        }
+
+        List<HealReport> reports = loadReports(dirPath);
+        if (reports.isEmpty()) {
+            CliOutput.println("No heal reports found.");
+            return;
+        }
+
+        // Combine all reports into one
+        HealReport combined = combineReports(reports);
+
+        exportService.exportToCsv(combined, outputPath);
+        CliOutput.success("Exported " + combined.getEvents().size() + " events to CSV: " + outputPath);
+    }
+
+    /**
+     * Export reports to JUnit XML format for CI integration.
+     */
+    public void exportJunitXml(String reportDir, String outputPath) throws IOException {
+        Path dirPath = Path.of(reportDir);
+        if (!Files.exists(dirPath)) {
+            CliOutput.error("Report directory not found: " + reportDir);
+            return;
+        }
+
+        List<HealReport> reports = loadReports(dirPath);
+        if (reports.isEmpty()) {
+            CliOutput.println("No heal reports found.");
+            return;
+        }
+
+        // Combine all reports into one
+        HealReport combined = combineReports(reports);
+
+        exportService.exportToJunitXml(combined, outputPath);
+        CliOutput.success("Exported " + combined.getEvents().size() + " events to JUnit XML: " + outputPath);
+    }
+
+    /**
+     * Export reports to a summary text file.
+     */
+    public void exportSummary(String reportDir, String outputPath) throws IOException {
+        Path dirPath = Path.of(reportDir);
+        if (!Files.exists(dirPath)) {
+            CliOutput.error("Report directory not found: " + reportDir);
+            return;
+        }
+
+        List<HealReport> reports = loadReports(dirPath);
+        if (reports.isEmpty()) {
+            CliOutput.println("No heal reports found.");
+            return;
+        }
+
+        HealReport combined = combineReports(reports);
+        exportService.exportToSummaryText(combined, outputPath);
+        CliOutput.success("Exported summary to: " + outputPath);
+    }
+
+    /**
+     * Export trend data across multiple reports for analysis.
+     */
+    public void exportTrends(String reportDir, String outputPath) throws IOException {
+        Path dirPath = Path.of(reportDir);
+        if (!Files.exists(dirPath)) {
+            CliOutput.error("Report directory not found: " + reportDir);
+            return;
+        }
+
+        List<HealReport> reports = loadReports(dirPath);
+        if (reports.isEmpty()) {
+            CliOutput.println("No heal reports found.");
+            return;
+        }
+
+        // Sort by timestamp (oldest first)
+        reports = reports.stream()
+                .sorted((a, b) -> {
+                    Instant ta = a.getTimestamp() != null ? a.getTimestamp() : Instant.MIN;
+                    Instant tb = b.getTimestamp() != null ? b.getTimestamp() : Instant.MIN;
+                    return ta.compareTo(tb);
+                })
+                .toList();
+
+        exportService.exportTrendsCsv(reports, outputPath);
+        CliOutput.success("Exported trend data for " + reports.size() + " reports to: " + outputPath);
+    }
+
+    /**
+     * Export reports to PDF format.
+     */
+    public void exportPdf(String reportDir, String outputPath) throws IOException {
+        Path dirPath = Path.of(reportDir);
+        if (!Files.exists(dirPath)) {
+            CliOutput.error("Report directory not found: " + reportDir);
+            return;
+        }
+
+        List<HealReport> reports = loadReports(dirPath);
+        if (reports.isEmpty()) {
+            CliOutput.println("No heal reports found.");
+            return;
+        }
+
+        // Combine all reports into one for the PDF
+        HealReport combined = combineReports(reports);
+
+        exportService.exportToPdf(combined, outputPath);
+        CliOutput.success("Exported " + combined.getEvents().size() + " events to PDF: " + outputPath);
+    }
+
+    /**
+     * Combine multiple reports into one.
+     */
+    private HealReport combineReports(List<HealReport> reports) {
+        HealReport combined = new HealReport();
+        combined.setTimestamp(Instant.now());
+
+        long totalDuration = 0;
+        for (HealReport report : reports) {
+            for (HealEvent event : report.getEvents()) {
+                combined.addEvent(event);
+            }
+            totalDuration += report.getDurationMs();
+        }
+        combined.setDurationMs(totalDuration);
+
+        return combined;
     }
 }

@@ -12,6 +12,7 @@ import org.openqa.selenium.interactions.Sequence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -194,6 +195,9 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
             throw originalException;
         }
 
+        // Capture screenshot BEFORE healing attempt (for visual evidence)
+        String beforeScreenshotBase64 = captureScreenshotBase64();
+
         try {
             LocatorInfo originalLocator = byToLocatorInfo(by);
             UiSnapshot snapshot = snapshotBuilder.captureAll();
@@ -233,14 +237,19 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
                 By healedBy = locatorInfoToBy(healedLocator);
                 logger.info("Healed locator: {} -> {}", by, healedBy);
 
-                // Record heal for summary report
-                HealingSummary.getInstance().recordHeal(
+                // Capture screenshot AFTER successful healing
+                String afterScreenshotBase64 = captureScreenshotBase64();
+
+                // Record heal for summary report with visual evidence
+                HealingSummary.getInstance().recordHealWithScreenshots(
                     effectiveStepText,
                     by.toString(),
                     healedBy.toString(),
                     result.getConfidence(),
                     sourceLocation != null ? sourceLocation.getFilePath() : null,
-                    sourceLocation != null ? sourceLocation.getLineNumber() : 0
+                    sourceLocation != null ? sourceLocation.getLineNumber() : 0,
+                    beforeScreenshotBase64,
+                    afterScreenshotBase64
                 );
 
                 return wrapElement(delegate.findElement(healedBy), healedBy);
@@ -251,6 +260,24 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
         }
 
         throw originalException;
+    }
+
+    /**
+     * Capture a screenshot and return it as a Base64-encoded string.
+     * Returns null if screenshot capture fails or is not supported.
+     */
+    private String captureScreenshotBase64() {
+        if (!(delegate instanceof TakesScreenshot)) {
+            return null;
+        }
+
+        try {
+            byte[] screenshotBytes = ((TakesScreenshot) delegate).getScreenshotAs(OutputType.BYTES);
+            return Base64.getEncoder().encodeToString(screenshotBytes);
+        } catch (Exception e) {
+            logger.debug("Failed to capture screenshot: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**

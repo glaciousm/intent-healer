@@ -218,11 +218,39 @@ public class HealEvent {
         @JsonProperty("dom_snapshot")
         private String domSnapshot;
 
+        @JsonProperty("before_screenshot_base64")
+        private String beforeScreenshotBase64;
+
+        @JsonProperty("after_screenshot_base64")
+        private String afterScreenshotBase64;
+
+        @JsonProperty("diff_screenshot_base64")
+        private String diffScreenshotBase64;
+
+        @JsonProperty("diff_percentage")
+        private Double diffPercentage;
+
         public String getScreenshot() { return screenshot; }
         public void setScreenshot(String screenshot) { this.screenshot = screenshot; }
 
         public String getDomSnapshot() { return domSnapshot; }
         public void setDomSnapshot(String domSnapshot) { this.domSnapshot = domSnapshot; }
+
+        public String getBeforeScreenshotBase64() { return beforeScreenshotBase64; }
+        public void setBeforeScreenshotBase64(String beforeScreenshotBase64) { this.beforeScreenshotBase64 = beforeScreenshotBase64; }
+
+        public String getAfterScreenshotBase64() { return afterScreenshotBase64; }
+        public void setAfterScreenshotBase64(String afterScreenshotBase64) { this.afterScreenshotBase64 = afterScreenshotBase64; }
+
+        public String getDiffScreenshotBase64() { return diffScreenshotBase64; }
+        public void setDiffScreenshotBase64(String diffScreenshotBase64) { this.diffScreenshotBase64 = diffScreenshotBase64; }
+
+        public Double getDiffPercentage() { return diffPercentage; }
+        public void setDiffPercentage(Double diffPercentage) { this.diffPercentage = diffPercentage; }
+
+        public boolean hasVisualEvidence() {
+            return beforeScreenshotBase64 != null && afterScreenshotBase64 != null;
+        }
     }
 
     /**

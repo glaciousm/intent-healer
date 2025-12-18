@@ -28,7 +28,8 @@ public class HealingSummary {
                            double confidence, String sourceFile, int lineNumber) {
         if (enabled) {
             healedLocators.add(new HealedLocator(
-                stepText, originalLocator, healedLocator, confidence, sourceFile, lineNumber
+                stepText, originalLocator, healedLocator, confidence, sourceFile, lineNumber,
+                null, null  // No screenshots
             ));
         }
     }
@@ -38,6 +39,20 @@ public class HealingSummary {
      */
     public void recordHeal(String stepText, String originalLocator, String healedLocator, double confidence) {
         recordHeal(stepText, originalLocator, healedLocator, confidence, null, 0);
+    }
+
+    /**
+     * Record a healed locator with before/after screenshots for visual evidence.
+     */
+    public void recordHealWithScreenshots(String stepText, String originalLocator, String healedLocator,
+                                          double confidence, String sourceFile, int lineNumber,
+                                          String beforeScreenshotBase64, String afterScreenshotBase64) {
+        if (enabled) {
+            healedLocators.add(new HealedLocator(
+                stepText, originalLocator, healedLocator, confidence, sourceFile, lineNumber,
+                beforeScreenshotBase64, afterScreenshotBase64
+            ));
+        }
     }
 
     /**
@@ -122,7 +137,7 @@ public class HealingSummary {
     }
 
     /**
-     * Record of a healed locator.
+     * Record of a healed locator with optional visual evidence.
      */
     public record HealedLocator(
         String stepText,
@@ -130,6 +145,15 @@ public class HealingSummary {
         String healedLocator,
         double confidence,
         String sourceFile,
-        int lineNumber
-    ) {}
+        int lineNumber,
+        String beforeScreenshotBase64,
+        String afterScreenshotBase64
+    ) {
+        /**
+         * Check if this heal has visual evidence (screenshots).
+         */
+        public boolean hasVisualEvidence() {
+            return beforeScreenshotBase64 != null && afterScreenshotBase64 != null;
+        }
+    }
 }

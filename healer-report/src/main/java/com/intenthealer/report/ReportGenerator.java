@@ -12,6 +12,7 @@ import com.intenthealer.core.model.LocatorInfo;
 import com.intenthealer.report.HealingAnalytics;
 import com.intenthealer.report.HealingAnalytics.AnalyticsSummary;
 import com.intenthealer.report.HealingAnalytics.FrequentLocator;
+import com.intenthealer.report.VisualDiffGenerator;
 import com.intenthealer.report.model.HealEvent;
 import com.intenthealer.report.model.HealReport;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ public class ReportGenerator {
     private final ObjectMapper objectMapper;
     private final LocatorRecommender locatorRecommender;
     private final HealingAnalytics healingAnalytics;
+    private final VisualDiffGenerator visualDiffGenerator;
     private HealReport currentReport;
 
     public ReportGenerator(ReportConfig config) {
@@ -52,6 +54,7 @@ public class ReportGenerator {
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.locatorRecommender = new LocatorRecommender();
         this.healingAnalytics = new HealingAnalytics();
+        this.visualDiffGenerator = new VisualDiffGenerator();
     }
 
     public ReportGenerator() {
@@ -157,6 +160,19 @@ public class ReportGenerator {
                     .confidence { color: #666; }
                     .reasoning { background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px; }
                     pre { background: #263238; color: #aed581; padding: 10px; border-radius: 4px; overflow-x: auto; }
+                    /* Visual Evidence Styles */
+                    .visual-evidence { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }
+                    .visual-evidence h4 { margin: 0 0 10px 0; color: #495057; font-size: 1em; }
+                    .visual-evidence-stats { margin-bottom: 10px; }
+                    .diff-percentage { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+                    .change-significant { background: #fff3cd; color: #856404; }
+                    .change-minimal { background: #d4edda; color: #155724; }
+                    .screenshot-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+                    .screenshot-panel { text-align: center; }
+                    .screenshot-label { font-weight: bold; margin-bottom: 5px; color: #495057; font-size: 0.9em; }
+                    .screenshot-img { max-width: 100%; height: auto; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+                    .screenshot-img:hover { transform: scale(1.02); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+                    @media (max-width: 768px) { .screenshot-comparison { grid-template-columns: 1fr; } }
                 </style>
             </head>
             <body>
@@ -208,6 +224,9 @@ public class ReportGenerator {
                 default -> "status-failed";
             };
 
+            // Generate visual evidence section if screenshots are available
+            String visualEvidenceHtml = generateVisualEvidenceHtml(event);
+
             html.append("""
                     <div class="event" onclick="this.classList.toggle('expanded')">
                         <div class="event-header">
@@ -224,6 +243,7 @@ public class ReportGenerator {
                             <div class="reasoning">
                                 <strong>Reasoning:</strong> %s
                             </div>
+                            %s
                         </div>
                     </div>
                 """.formatted(
@@ -235,7 +255,8 @@ public class ReportGenerator {
                     escapeHtml(event.getScenario()),
                     escapeHtml(event.getFailure() != null ? event.getFailure().getExceptionType() : "Unknown"),
                     escapeHtml(event.getFailure() != null ? event.getFailure().getMessage() : ""),
-                    escapeHtml(event.getDecision() != null ? event.getDecision().getReasoning() : "N/A")
+                    escapeHtml(event.getDecision() != null ? event.getDecision().getReasoning() : "N/A"),
+                    visualEvidenceHtml
             ));
         }
 
@@ -245,13 +266,218 @@ public class ReportGenerator {
         // Locator Recommendations section
         html.append(generateLocatorRecommendationsHtml());
 
+        // Trend Charts section (requires multiple reports)
+        html.append(generateTrendChartsHtml());
+
         html.append("""
                 </div>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+                <script>
+                    // Initialize charts if data is available
+                    document.addEventListener('DOMContentLoaded', function() {
+                        initializeTrendCharts();
+                    });
+                </script>
             </body>
             </html>
             """);
 
         return html.toString();
+    }
+
+    /**
+     * Generates trend charts section with interactive Chart.js visualizations.
+     */
+    private String generateTrendChartsHtml() {
+        if (currentReport == null || currentReport.getEvents() == null || currentReport.getEvents().size() < 2) {
+            return "";
+        }
+
+        AnalyticsSummary analytics = healingAnalytics.analyzeReport(currentReport);
+        StringBuilder html = new StringBuilder();
+
+        html.append("""
+                    <h2>Trend Analysis</h2>
+                    <div class="charts-container">
+            """);
+
+        // Confidence distribution chart
+        if (!analytics.confidenceDistribution().isEmpty()) {
+            html.append("""
+                        <div class="chart-card">
+                            <h3>Confidence Distribution</h3>
+                            <canvas id="confidenceChart" width="400" height="200"></canvas>
+                        </div>
+                """);
+        }
+
+        // Heals by action type chart
+        if (!analytics.healsByActionType().isEmpty()) {
+            html.append("""
+                        <div class="chart-card">
+                            <h3>Heals by Action Type</h3>
+                            <canvas id="actionTypeChart" width="400" height="200"></canvas>
+                        </div>
+                """);
+        }
+
+        // Success rate gauge
+        html.append("""
+                        <div class="chart-card">
+                            <h3>Success Rate</h3>
+                            <canvas id="successRateChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+            """);
+
+        // Add chart initialization script
+        html.append(generateChartScripts(analytics));
+
+        // Add CSS for charts
+        html.append("""
+                    <style>
+                        .charts-container {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                            gap: 20px;
+                            margin-top: 20px;
+                        }
+                        .chart-card {
+                            background: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        .chart-card h3 {
+                            margin: 0 0 15px 0;
+                            font-size: 1em;
+                            color: #333;
+                        }
+                        @media (max-width: 768px) {
+                            .charts-container {
+                                grid-template-columns: 1fr;
+                            }
+                        }
+                    </style>
+                """);
+
+        return html.toString();
+    }
+
+    /**
+     * Generates JavaScript for initializing Chart.js charts.
+     */
+    private String generateChartScripts(AnalyticsSummary analytics) {
+        StringBuilder js = new StringBuilder();
+        js.append("<script>\n");
+        js.append("function initializeTrendCharts() {\n");
+
+        // Confidence distribution chart
+        if (!analytics.confidenceDistribution().isEmpty()) {
+            js.append("  // Confidence Distribution Chart\n");
+            js.append("  var confCtx = document.getElementById('confidenceChart');\n");
+            js.append("  if (confCtx) {\n");
+            js.append("    new Chart(confCtx, {\n");
+            js.append("      type: 'bar',\n");
+            js.append("      data: {\n");
+            js.append("        labels: [");
+            js.append(analytics.confidenceDistribution().keySet().stream()
+                    .map(s -> "'" + s + "'")
+                    .reduce((a, b) -> a + "," + b).orElse(""));
+            js.append("],\n");
+            js.append("        datasets: [{\n");
+            js.append("          label: 'Distribution %',\n");
+            js.append("          data: [");
+            js.append(analytics.confidenceDistribution().values().stream()
+                    .map(v -> String.format("%.1f", v))
+                    .reduce((a, b) -> a + "," + b).orElse(""));
+            js.append("],\n");
+            js.append("          backgroundColor: ['#ef5350', '#ff7043', '#ffca28', '#66bb6a', '#4caf50'],\n");
+            js.append("          borderWidth: 0\n");
+            js.append("        }]\n");
+            js.append("      },\n");
+            js.append("      options: {\n");
+            js.append("        responsive: true,\n");
+            js.append("        plugins: { legend: { display: false } },\n");
+            js.append("        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: function(v) { return v + '%'; } } } }\n");
+            js.append("      }\n");
+            js.append("    });\n");
+            js.append("  }\n\n");
+        }
+
+        // Action type chart
+        if (!analytics.healsByActionType().isEmpty()) {
+            js.append("  // Action Type Chart\n");
+            js.append("  var actionCtx = document.getElementById('actionTypeChart');\n");
+            js.append("  if (actionCtx) {\n");
+            js.append("    new Chart(actionCtx, {\n");
+            js.append("      type: 'doughnut',\n");
+            js.append("      data: {\n");
+            js.append("        labels: [");
+            js.append(analytics.healsByActionType().keySet().stream()
+                    .map(s -> "'" + s + "'")
+                    .reduce((a, b) -> a + "," + b).orElse(""));
+            js.append("],\n");
+            js.append("        datasets: [{\n");
+            js.append("          data: [");
+            js.append(analytics.healsByActionType().values().stream()
+                    .map(String::valueOf)
+                    .reduce((a, b) -> a + "," + b).orElse(""));
+            js.append("],\n");
+            js.append("          backgroundColor: ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4', '#E91E63', '#795548', '#607D8B']\n");
+            js.append("        }]\n");
+            js.append("      },\n");
+            js.append("      options: {\n");
+            js.append("        responsive: true,\n");
+            js.append("        plugins: { legend: { position: 'right' } }\n");
+            js.append("      }\n");
+            js.append("    });\n");
+            js.append("  }\n\n");
+        }
+
+        // Success rate gauge
+        js.append("  // Success Rate Chart\n");
+        js.append("  var successCtx = document.getElementById('successRateChart');\n");
+        js.append("  if (successCtx) {\n");
+        double successRate = analytics.successRate();
+        js.append("    new Chart(successCtx, {\n");
+        js.append("      type: 'doughnut',\n");
+        js.append("      data: {\n");
+        js.append("        labels: ['Success', 'Other'],\n");
+        js.append("        datasets: [{\n");
+        js.append(String.format("          data: [%.1f, %.1f],\n", successRate, 100 - successRate));
+        js.append("          backgroundColor: ['#4CAF50', '#e0e0e0'],\n");
+        js.append("          borderWidth: 0\n");
+        js.append("        }]\n");
+        js.append("      },\n");
+        js.append("      options: {\n");
+        js.append("        responsive: true,\n");
+        js.append("        circumference: 180,\n");
+        js.append("        rotation: -90,\n");
+        js.append("        cutout: '70%',\n");
+        js.append("        plugins: {\n");
+        js.append("          legend: { display: false },\n");
+        js.append("          tooltip: { enabled: false }\n");
+        js.append("        }\n");
+        js.append("      },\n");
+        js.append("      plugins: [{\n");
+        js.append("        afterDraw: function(chart) {\n");
+        js.append("          var ctx = chart.ctx;\n");
+        js.append("          ctx.save();\n");
+        js.append("          ctx.textAlign = 'center';\n");
+        js.append("          ctx.font = 'bold 28px Arial';\n");
+        js.append("          ctx.fillStyle = '#4CAF50';\n");
+        js.append(String.format("          ctx.fillText('%.1f%%', chart.width/2, chart.height - 30);\n", successRate));
+        js.append("          ctx.restore();\n");
+        js.append("        }\n");
+        js.append("      }]\n");
+        js.append("    });\n");
+        js.append("  }\n");
+
+        js.append("}\n");
+        js.append("</script>\n");
+
+        return js.toString();
     }
 
     /**
@@ -635,6 +861,141 @@ public class ReportGenerator {
                 """);
 
         return html.toString();
+    }
+
+    /**
+     * Generates the visual evidence section for a single heal event.
+     * Shows before/after screenshots and visual diff when available.
+     */
+    private String generateVisualEvidenceHtml(HealEvent event) {
+        if (event.getArtifacts() == null || !event.getArtifacts().hasVisualEvidence()) {
+            return "";
+        }
+
+        HealEvent.ArtifactInfo artifacts = event.getArtifacts();
+        String beforeImg = artifacts.getBeforeScreenshotBase64();
+        String afterImg = artifacts.getAfterScreenshotBase64();
+        String diffImg = artifacts.getDiffScreenshotBase64();
+        Double diffPct = artifacts.getDiffPercentage();
+
+        StringBuilder html = new StringBuilder();
+
+        html.append("""
+                <div class="visual-evidence">
+                    <h4>Visual Evidence</h4>
+                    <div class="visual-evidence-stats">
+            """);
+
+        if (diffPct != null) {
+            String changeClass = diffPct > 5.0 ? "change-significant" : "change-minimal";
+            html.append("""
+                        <span class="diff-percentage %s">%.1f%% visual change</span>
+                """.formatted(changeClass, diffPct));
+        }
+
+        html.append("""
+                    </div>
+                    <div class="screenshot-comparison">
+                        <div class="screenshot-panel">
+                            <div class="screenshot-label">Before Healing</div>
+                            <img src="%s" alt="Before healing" class="screenshot-img" />
+                        </div>
+                        <div class="screenshot-panel">
+                            <div class="screenshot-label">After Healing</div>
+                            <img src="%s" alt="After healing" class="screenshot-img" />
+                        </div>
+            """.formatted(
+                beforeImg.startsWith("data:") ? beforeImg : "data:image/png;base64," + beforeImg,
+                afterImg.startsWith("data:") ? afterImg : "data:image/png;base64," + afterImg
+        ));
+
+        // Add diff image if available
+        if (diffImg != null && !diffImg.isEmpty()) {
+            html.append("""
+                        <div class="screenshot-panel">
+                            <div class="screenshot-label">Difference</div>
+                            <img src="%s" alt="Visual difference" class="screenshot-img" />
+                        </div>
+                """.formatted(
+                    diffImg.startsWith("data:") ? diffImg : "data:image/png;base64," + diffImg
+            ));
+        }
+
+        html.append("""
+                    </div>
+                </div>
+            """);
+
+        return html.toString();
+    }
+
+    /**
+     * Returns CSS styles for visual evidence display.
+     * Called during HTML generation to include necessary styles.
+     */
+    private String getVisualEvidenceStyles() {
+        return """
+                .visual-evidence {
+                    margin-top: 15px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    border: 1px solid #e9ecef;
+                }
+                .visual-evidence h4 {
+                    margin: 0 0 10px 0;
+                    color: #495057;
+                    font-size: 1em;
+                }
+                .visual-evidence-stats {
+                    margin-bottom: 10px;
+                }
+                .diff-percentage {
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.85em;
+                    font-weight: bold;
+                }
+                .change-significant {
+                    background: #fff3cd;
+                    color: #856404;
+                }
+                .change-minimal {
+                    background: #d4edda;
+                    color: #155724;
+                }
+                .screenshot-comparison {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 15px;
+                }
+                .screenshot-panel {
+                    text-align: center;
+                }
+                .screenshot-label {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    color: #495057;
+                    font-size: 0.9em;
+                }
+                .screenshot-img {
+                    max-width: 100%;
+                    height: auto;
+                    border: 1px solid #dee2e6;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                .screenshot-img:hover {
+                    transform: scale(1.02);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                }
+                @media (max-width: 768px) {
+                    .screenshot-comparison {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            """;
     }
 
     /**

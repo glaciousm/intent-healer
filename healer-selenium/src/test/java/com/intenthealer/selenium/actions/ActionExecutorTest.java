@@ -9,11 +9,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.Interactive;
+import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.UnexpectedTagNameException;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +28,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ActionExecutorTest {
 
     @Mock
@@ -44,9 +50,13 @@ class ActionExecutorTest {
 
     @BeforeEach
     void setUp() {
-        // Make mockDriver also implement JavascriptExecutor
+        // Make mockDriver implement JavascriptExecutor and Interactive for Actions API
         mockDriver = mock(WebDriver.class, withSettings()
-                .extraInterfaces(JavascriptExecutor.class));
+                .extraInterfaces(JavascriptExecutor.class, Interactive.class));
+
+        // Stub the perform() method for Interactive (Actions API)
+        doNothing().when((Interactive) mockDriver).perform(anyCollection());
+
         executor = new ActionExecutor(mockDriver, mockConfig);
     }
 
@@ -120,6 +130,9 @@ class ActionExecutorTest {
         doThrow(new ElementClickInterceptedException("Failed")).when(mockElement).click();
         doThrow(new WebDriverException("JS failed"))
                 .when((JavascriptExecutor) mockDriver).executeScript(anyString(), any());
+        // Also make Actions API fail (Interactive.perform is called by Actions.perform())
+        doThrow(new WebDriverException("Actions failed"))
+                .when((Interactive) mockDriver).perform(anyCollection());
 
         assertThatThrownBy(() -> executor.execute(ActionType.CLICK, snapshot, null))
                 .isInstanceOf(HealingException.class)
@@ -471,16 +484,24 @@ class ActionExecutorTest {
     private WebElement createMockSelectElement(String... options) {
         WebElement selectElement = mock(WebElement.class);
         when(selectElement.getTagName()).thenReturn("select");
+        when(selectElement.isEnabled()).thenReturn(true);  // Select must be enabled
+        when(selectElement.getAttribute("multiple")).thenReturn(null);  // Not a multi-select
 
-        // Mock findElements for options
+        // Mock findElements for options - use any() to match any By object
         List<WebElement> optionElements = new java.util.ArrayList<>();
         for (String option : options) {
             WebElement optionElement = mock(WebElement.class);
             when(optionElement.getText()).thenReturn(option);
             when(optionElement.getAttribute("value")).thenReturn(option);
+            when(optionElement.getAttribute("index")).thenReturn(String.valueOf(optionElements.size()));
+            when(optionElement.isEnabled()).thenReturn(true);
+            when(optionElement.isSelected()).thenReturn(false);
+            // click() is called by Select.selectByVisibleText()
+            doNothing().when(optionElement).click();
             optionElements.add(optionElement);
         }
-        when(selectElement.findElements(By.tagName("option"))).thenReturn(optionElements);
+        // Use any() matcher since Select creates new By.tagName instances
+        when(selectElement.findElements(any(By.class))).thenReturn(optionElements);
 
         return selectElement;
     }

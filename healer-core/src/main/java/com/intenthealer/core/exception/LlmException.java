@@ -38,8 +38,9 @@ public class LlmException extends HealingException {
      * Creates an exception for unavailable provider.
      */
     public static LlmException unavailable(String provider, String model, Throwable cause) {
+        String causeMsg = cause != null && cause.getMessage() != null ? ": " + cause.getMessage() : "";
         return new LlmException(
-                "LLM provider unavailable: " + provider + "/" + model,
+                "LLM provider unavailable: " + provider + "/" + model + causeMsg,
                 cause, provider, model, HealingFailureReason.LLM_UNAVAILABLE);
     }
 
