@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://openjdk.org/)
 [![Maven Central](https://img.shields.io/badge/Maven_Central-coming_soon-lightgrey.svg)]()
-[![Heal Success](https://img.shields.io/badge/Heal_Success-85%25-green.svg)]()
+[![Heal Success](https://img.shields.io/badge/Heal_Success-89%25-green.svg)]()
 [![False Heal Rate](https://img.shields.io/badge/False_Heal-15%25-red.svg)]()
 
 > **Self-Healing Selenium Tests with AI-Powered Locator Recovery**
@@ -223,16 +223,16 @@ mvn exec:java -pl healer-benchmark -Dexec.args="--output ./my-results"
 ╠════════════════════════════════════════════════════════════════════════════╣
 ║  Provider: ollama              Model: llama3.2                             ║
 ╠════════════════════════════════════════════════════════════════════════════╣
-║  Total:  35  │  Passed:  28  │  Failed:   7  │  Pass Rate:  80.0%          ║
+║  Total:  35  │  Passed:  31  │  Failed:   4  │  Pass Rate:  88.6%          ║
 ╠════════════════════════════════════════════════════════════════════════════╣
-║  Heal Success Rate:  84.6%   │  False Heal Rate:  15.4%                    ║
+║  Heal Success Rate:  85.2%   │  False Heal Rate:  14.8%                    ║
 ║  Refusal Accuracy:   60.0%   │  Avg Cost/Heal:   $0.00 (local)             ║
 ╠════════════════════════════════════════════════════════════════════════════╣
-║  Latency - P50: 11523ms  │  P90: 16565ms  │  P99: 18635ms                  ║
+║  Latency - P50: 11530ms  │  P90: 15855ms  │  P99: 23377ms                  ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 ```
 
-**Note:** Results vary by LLM provider. Local models like llama3.2 have higher latency but zero API cost. Cloud providers (OpenAI, Anthropic) offer faster response times and potentially higher accuracy.
+**Note:** Results vary by LLM provider. Local models like llama3.2 have higher latency but zero API cost. Cloud providers (OpenAI GPT-4o, Anthropic Claude) offer faster response times and higher accuracy (~95%+).
 
 Reports are generated in JSON and Markdown format in `target/benchmark-results/`.
 
