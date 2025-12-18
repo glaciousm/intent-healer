@@ -8,6 +8,7 @@
 package com.intenthealer.benchmark.scenarios;
 
 import com.intenthealer.benchmark.BenchmarkResult.ExpectedOutcome;
+import com.intenthealer.core.model.ElementSnapshot;
 import org.openqa.selenium.By;
 
 /**
@@ -94,5 +95,15 @@ public class LabelTextChangedScenario extends AbstractBenchmarkScenario {
                 <button type="submit" class="btn-primary">Save Changes</button>
             </form>
             """);
+    }
+
+    @Override
+    protected boolean matchesExpectedElement(ElementSnapshot element) {
+        // The correct element is the phone input with type="tel" and name="phone"
+        String type = element.getType();
+        String name = element.getName();
+        return "tel".equals(type) ||
+               "phone".equals(name) ||
+               (name != null && name.toLowerCase().contains("phone"));
     }
 }

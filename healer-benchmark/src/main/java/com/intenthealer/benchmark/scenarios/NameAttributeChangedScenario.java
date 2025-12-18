@@ -8,6 +8,7 @@
 package com.intenthealer.benchmark.scenarios;
 
 import com.intenthealer.benchmark.BenchmarkResult.ExpectedOutcome;
+import com.intenthealer.core.model.ElementSnapshot;
 import org.openqa.selenium.By;
 
 /**
@@ -94,5 +95,16 @@ public class NameAttributeChangedScenario extends AbstractBenchmarkScenario {
                 <button type="submit" class="btn-primary">Create Account</button>
             </form>
             """);
+    }
+
+    @Override
+    protected boolean matchesExpectedElement(ElementSnapshot element) {
+        // The correct element is the email input with name="email_address"
+        // It should have type="email" or the name attribute containing "email"
+        String name = element.getName();
+        String type = element.getType();
+        return "email_address".equals(name) ||
+               "email".equals(type) ||
+               (name != null && name.toLowerCase().contains("email"));
     }
 }

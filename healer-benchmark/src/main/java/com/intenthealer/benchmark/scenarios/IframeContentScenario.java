@@ -90,7 +90,10 @@ public class IframeContentScenario extends AbstractBenchmarkScenario {
 
     @Override
     public String getAfterHtml() {
-        return wrapHtml("Checkout - After (Iframe Restructured)", """
+        // Simulates what the healer sees AFTER switching to iframe context
+        // In real usage, HealingWebDriver switches to iframe and captures its DOM
+        // For benchmark purposes, we flatten the iframe content into the main document
+        return wrapHtml("Checkout - After (Iframe Content Captured)", """
             <main>
                 <h1>Checkout</h1>
                 <div class="order-summary">
@@ -99,32 +102,28 @@ public class IframeContentScenario extends AbstractBenchmarkScenario {
                 </div>
                 <div class="payment-section">
                     <h2>Payment</h2>
-                    <iframe id="secure-payment" src="/secure-payment" title="Secure Payment">
-                        <!-- Iframe content (simulated) -->
-                        <html>
-                        <body>
-                            <form class="payment-form" data-form="payment">
-                                <div class="card-input">
-                                    <label>Card Number</label>
-                                    <input type="text" name="card_number" placeholder="Card number">
+                    <!-- Iframe content flattened for benchmark parsing -->
+                    <div id="iframe-content" data-source="secure-payment">
+                        <form class="payment-form" data-form="payment">
+                            <div class="card-input">
+                                <label>Card Number</label>
+                                <input type="text" name="card_number" placeholder="Card number">
+                            </div>
+                            <div class="card-details">
+                                <div class="expiry-input">
+                                    <label>Expiry</label>
+                                    <input type="text" name="expiry">
                                 </div>
-                                <div class="card-details">
-                                    <div class="expiry-input">
-                                        <label>Expiry</label>
-                                        <input type="text" name="expiry">
-                                    </div>
-                                    <div class="cvv-input">
-                                        <label>CVV</label>
-                                        <input type="text" name="cvv">
-                                    </div>
+                                <div class="cvv-input">
+                                    <label>CVV</label>
+                                    <input type="text" name="cvv">
                                 </div>
-                                <button type="submit" class="payment-btn btn-success">
-                                    Complete Payment
-                                </button>
-                            </form>
-                        </body>
-                        </html>
-                    </iframe>
+                            </div>
+                            <button type="submit" class="payment-btn btn-success">
+                                Complete Payment
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </main>
             """);

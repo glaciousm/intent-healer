@@ -8,6 +8,7 @@
 package com.intenthealer.benchmark.scenarios;
 
 import com.intenthealer.benchmark.BenchmarkResult.ExpectedOutcome;
+import com.intenthealer.core.model.ElementSnapshot;
 import org.openqa.selenium.By;
 
 /**
@@ -120,5 +121,13 @@ public class TableToGridScenario extends AbstractBenchmarkScenario {
                 </div>
             </div>
             """);
+    }
+
+    @Override
+    protected boolean matchesExpectedElement(ElementSnapshot element) {
+        // Must be the Edit button, not Delete
+        // The original locator targeted button.edit in the first row
+        String text = element.getNormalizedText();
+        return "Edit".equals(text);
     }
 }

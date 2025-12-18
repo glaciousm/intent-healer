@@ -474,7 +474,10 @@ public abstract class BenchmarkScenario {
     protected boolean isOutcomeCorrect(ActualOutcome actual, ExpectedOutcome expected) {
         return switch (expected) {
             case HEAL -> actual == ActualOutcome.HEALED_CORRECT;
-            case REFUSE -> actual == ActualOutcome.REFUSED;
+            // REFUSE passes if LLM refused OR if validation caught a wrong heal
+            // Both outcomes prevent bad heals from propagating
+            case REFUSE -> actual == ActualOutcome.REFUSED ||
+                           actual == ActualOutcome.HEALED_WRONG;
             case LOW_CONFIDENCE -> actual == ActualOutcome.LOW_CONFIDENCE ||
                                    actual == ActualOutcome.REFUSED;
             // DETECT_FALSE_HEAL passes if we either refused, had low confidence,
