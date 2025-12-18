@@ -14,7 +14,8 @@ public class HealingWebElement implements WebElement {
     private static final Logger logger = LoggerFactory.getLogger(HealingWebElement.class);
     private static final int MAX_RETRY_ATTEMPTS = 3;
 
-    private WebElement delegate;
+    // Volatile ensures visibility across threads when delegate is refreshed
+    private volatile WebElement delegate;
     private final By locator;
     private final HealingWebDriver driver;
 
@@ -170,8 +171,10 @@ public class HealingWebElement implements WebElement {
 
     /**
      * Refresh the element reference by re-finding it.
+     * Synchronized to prevent race conditions when multiple threads
+     * attempt to refresh the same element concurrently.
      */
-    private void refreshElement() {
+    private synchronized void refreshElement() {
         if (locator != null) {
             delegate = driver.refindElement(locator);
         }

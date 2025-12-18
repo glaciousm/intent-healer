@@ -10,7 +10,7 @@
 
     <name>Intent Healer</name>
     <description>Intent-Based Self-Healing for Selenium + Java + Cucumber</description>
-    <url>https://github.com/glaciousm/Turmeric</url>
+    <url>https://github.com/glaciousm/intent-healer</url>
     <inceptionYear>2025</inceptionYear>
 
     <licenses>
@@ -34,14 +34,14 @@
     </developers>
 
     <scm>
-        <url>https://github.com/glaciousm/Turmeric</url>
-        <connection>scm:git:git://github.com/glaciousm/Turmeric.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/glaciousm/Turmeric.git</developerConnection>
+        <url>https://github.com/glaciousm/intent-healer</url>
+        <connection>scm:git:git://github.com/glaciousm/intent-healer.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/glaciousm/intent-healer.git</developerConnection>
     </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/glaciousm/Turmeric/issues</url>
+        <url>https://github.com/glaciousm/intent-healer/issues</url>
     </issueManagement>
 
     <modules>
