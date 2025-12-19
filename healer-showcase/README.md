@@ -368,7 +368,7 @@ llm:
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <argLine>
-            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.0-SNAPSHOT.jar
+            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.0.jar
         </argLine>
     </configuration>
 </plugin>

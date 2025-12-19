@@ -34,17 +34,17 @@ Intent Healer is an intelligent test automation framework that automatically fix
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-selenium</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-llm</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -88,7 +88,7 @@ mvn clean install -pl healer-agent
 # 2. Create healer-config.yml in src/test/resources (see above)
 
 # 3. Run tests with the agent
-mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.0-SNAPSHOT.jar"
+mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.0.jar"
 ```
 
 That's it! The agent automatically intercepts all WebDriver instances (Chrome, Firefox, Edge, Safari) and adds self-healing capability with zero code changes.

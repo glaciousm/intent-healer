@@ -83,7 +83,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-core</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <scope>test</scope>
     </dependency>
 
@@ -91,7 +91,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-selenium</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <scope>test</scope>
     </dependency>
 
@@ -99,7 +99,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-llm</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <scope>test</scope>
     </dependency>
 
@@ -108,7 +108,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-cucumber</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <scope>test</scope>
     </dependency>
 
@@ -116,7 +116,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-junit</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <scope>test</scope>
     </dependency>
 
@@ -124,7 +124,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-testng</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <scope>test</scope>
     </dependency>
 </dependencies>
@@ -135,16 +135,16 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
 ```kotlin
 dependencies {
     // Required dependencies
-    testImplementation("io.github.glaciousm:healer-core:1.0.0-SNAPSHOT")
-    testImplementation("io.github.glaciousm:healer-selenium:1.0.0-SNAPSHOT")
-    testImplementation("io.github.glaciousm:healer-llm:1.0.0-SNAPSHOT")
+    testImplementation("io.github.glaciousm:healer-core:1.0.0")
+    testImplementation("io.github.glaciousm:healer-selenium:1.0.0")
+    testImplementation("io.github.glaciousm:healer-llm:1.0.0")
 
     // Optional: Choose your test framework integration
-    testImplementation("io.github.glaciousm:healer-cucumber:1.0.0-SNAPSHOT")  // For Cucumber
+    testImplementation("io.github.glaciousm:healer-cucumber:1.0.0")  // For Cucumber
     // OR
-    testImplementation("io.github.glaciousm:healer-junit:1.0.0-SNAPSHOT")     // For JUnit 5
+    testImplementation("io.github.glaciousm:healer-junit:1.0.0")     // For JUnit 5
     // OR
-    testImplementation("io.github.glaciousm:healer-testng:1.0.0-SNAPSHOT")    // For TestNG
+    testImplementation("io.github.glaciousm:healer-testng:1.0.0")    // For TestNG
 }
 ```
 
@@ -798,7 +798,7 @@ The Intent Healer Java Agent automatically intercepts all WebDriver instances an
 # Build from source
 mvn clean install -pl healer-agent
 
-# The fat JAR is at: healer-agent/target/healer-agent-1.0.0-SNAPSHOT.jar
+# The fat JAR is at: healer-agent/target/healer-agent-1.0.0.jar
 ```
 
 ### Step 2: Create Configuration File
@@ -833,7 +833,7 @@ cache:
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <argLine>
-            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.0-SNAPSHOT.jar
+            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.0.jar
         </argLine>
     </configuration>
 </plugin>
@@ -842,21 +842,21 @@ cache:
 **Option B: Command Line**
 
 ```bash
-mvn test -DargLine="-javaagent:/path/to/healer-agent-1.0.0-SNAPSHOT.jar"
+mvn test -DargLine="-javaagent:/path/to/healer-agent-1.0.0.jar"
 ```
 
 **Option C: Gradle**
 
 ```kotlin
 test {
-    jvmArgs("-javaagent:${rootProject.projectDir}/healer-agent/build/libs/healer-agent-1.0.0-SNAPSHOT.jar")
+    jvmArgs("-javaagent:${rootProject.projectDir}/healer-agent/build/libs/healer-agent-1.0.0.jar")
 }
 ```
 
 **Option D: Direct JVM Execution**
 
 ```bash
-java -javaagent:healer-agent-1.0.0-SNAPSHOT.jar \
+java -javaagent:healer-agent-1.0.0.jar \
      -jar your-test-runner.jar
 ```
 

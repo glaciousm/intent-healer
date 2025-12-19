@@ -244,7 +244,7 @@ Java Agent for automatic self-healing without any code changes.
 
 **Usage:**
 ```bash
-mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.0-SNAPSHOT.jar"
+mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.0.jar"
 ```
 
 ---
