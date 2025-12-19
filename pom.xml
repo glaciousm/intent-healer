@@ -379,10 +379,7 @@
                     <configuration>
                         <source>21</source>
                         <doclint>none</doclint>
-                        <excludePackageNames>healer-vscode.*</excludePackageNames>
-                        <sourceFileExcludes>
-                            <exclude>**/healer-vscode/**</exclude>
-                        </sourceFileExcludes>
+                        <additionalJOption>--allow-script-in-comments</additionalJOption>
                     </configuration>
                 </plugin>
             </plugins>
