@@ -106,6 +106,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Build modules for dependency resolution
+        run: mvn install -DskipTests -q
+
       - name: Run OWASP Dependency Check
         run: mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=9
         continue-on-error: true
