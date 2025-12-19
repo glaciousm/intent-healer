@@ -16,7 +16,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * WebDriver wrapper that provides automatic healing capabilities.
@@ -32,9 +31,9 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
     private final HealerConfig config;
     private final StackTraceAnalyzer stackTraceAnalyzer;
 
-    // Current context for healing (thread-safe)
-    private final AtomicReference<IntentContract> currentIntent;
-    private final AtomicReference<String> currentStepText;
+    // Current context for healing (thread-safe, per-thread isolation)
+    private final ThreadLocal<IntentContract> currentIntent = new ThreadLocal<>();
+    private final ThreadLocal<String> currentStepText = new ThreadLocal<>();
 
     public HealingWebDriver(WebDriver delegate, HealingEngine healingEngine, HealerConfig config) {
         this.delegate = delegate;
@@ -42,8 +41,6 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
         this.config = config;
         this.snapshotBuilder = new SnapshotBuilder(delegate);
         this.stackTraceAnalyzer = new StackTraceAnalyzer();
-        this.currentIntent = new AtomicReference<>();
-        this.currentStepText = new AtomicReference<>();
     }
 
     /**
@@ -56,10 +53,11 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
 
     /**
      * Clear the current intent context.
+     * Uses remove() to properly clean up ThreadLocal and avoid memory leaks.
      */
     public void clearCurrentIntent() {
-        this.currentIntent.set(null);
-        this.currentStepText.set(null);
+        this.currentIntent.remove();
+        this.currentStepText.remove();
     }
 
     @Override

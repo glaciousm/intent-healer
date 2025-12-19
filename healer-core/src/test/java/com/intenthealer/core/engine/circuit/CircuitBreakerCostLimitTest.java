@@ -310,18 +310,26 @@ class CircuitBreakerCostLimitTest {
         void handlesConcurrentCostAdditions() throws InterruptedException {
             final int threads = 10;
             final double costPerThread = 0.5;
+            final int opsPerThread = 10;
 
             Thread[] addingThreads = new Thread[threads];
             for (int i = 0; i < threads; i++) {
                 addingThreads[i] = new Thread(() -> {
-                    for (int j = 0; j < 10; j++) {
+                    for (int j = 0; j < opsPerThread; j++) {
                         breaker.addCost(costPerThread);
                     }
                 });
             }
 
             for (Thread t : addingThreads) t.start();
-            for (Thread t : addingThreads) t.join();
+            for (Thread t : addingThreads) {
+                // Add timeout to prevent hanging on CI
+                t.join(5000);
+                if (t.isAlive()) {
+                    t.interrupt();
+                    fail("Thread did not complete within timeout");
+                }
+            }
 
             // Should have all costs added (10 threads * 10 ops * 0.5 = 50)
             assertEquals(50.0, breaker.getDailyCost(), 0.001);

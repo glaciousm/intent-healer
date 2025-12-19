@@ -37,6 +37,9 @@ jobs:
 
       - name: Run tests
         run: mvn test
+        env:
+          TEST_API_KEY: test-key-123
+          TEST_ANTHROPIC_KEY: test-anthropic-key-123
 
       - name: Run integration tests
         run: mvn verify -DskipUnitTests
@@ -102,6 +105,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+
+      - name: Build modules for dependency resolution
+        run: mvn install -DskipTests -q
 
       - name: Run OWASP Dependency Check
         run: mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=9

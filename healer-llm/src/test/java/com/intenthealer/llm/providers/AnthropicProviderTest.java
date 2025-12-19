@@ -241,7 +241,9 @@ class AnthropicProviderTest {
 
     @Test
     void evaluateCandidates_withMissingApiKey_throwsException() {
-        System.clearProperty("TEST_ANTHROPIC_KEY");
+        // Use a non-existent env var to ensure API key is not found
+        // (clearing system property isn't enough if CI sets env var)
+        config.setApiKeyEnv("NONEXISTENT_API_KEY_FOR_TEST");
 
         FailureContext failure = createSampleFailure();
         UiSnapshot snapshot = createSampleSnapshot();
