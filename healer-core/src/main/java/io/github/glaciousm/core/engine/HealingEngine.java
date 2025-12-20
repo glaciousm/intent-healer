@@ -106,6 +106,14 @@ public class HealingEngine {
      * Attempt to heal a test failure.
      */
     public HealResult attemptHeal(FailureContext failure, IntentContract intent) {
+        return attemptHeal(failure, intent, null);
+    }
+
+    /**
+     * Attempt to heal a test failure with a pre-captured snapshot.
+     * This is useful when the snapshot has already been captured (e.g., in agent mode).
+     */
+    public HealResult attemptHeal(FailureContext failure, IntentContract intent, UiSnapshot preSnapshot) {
         Instant startTime = Instant.now();
 
         try {
@@ -121,11 +129,14 @@ public class HealingEngine {
                 return HealResult.refused(preCheck.getReason());
             }
 
-            // 2. Capture UI snapshot
-            if (snapshotCapture == null) {
-                return HealResult.failed("Snapshot capture not configured");
+            // 2. Get UI snapshot (use pre-captured or capture new)
+            UiSnapshot snapshot = preSnapshot;
+            if (snapshot == null) {
+                if (snapshotCapture == null) {
+                    return HealResult.failed("Snapshot capture not configured");
+                }
+                snapshot = snapshotCapture.apply(failure);
             }
-            UiSnapshot snapshot = snapshotCapture.apply(failure);
 
             if (snapshot == null || !snapshot.hasElements()) {
                 return HealResult.failed("No interactive elements found on page");

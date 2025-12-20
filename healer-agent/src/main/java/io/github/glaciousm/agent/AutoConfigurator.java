@@ -167,8 +167,8 @@ public class AutoConfigurator {
 
             IntentContract intent = IntentContract.defaultContract("find element");
 
-            // Attempt healing
-            HealResult result = engine.attemptHeal(failureContext, intent);
+            // Attempt healing with pre-captured snapshot
+            HealResult result = engine.attemptHeal(failureContext, intent, snapshot);
 
             if (result != null && result.isSuccess() && result.getHealedLocator().isPresent()) {
                 String healedLocatorStr = result.getHealedLocator().get();
@@ -294,11 +294,23 @@ public class AutoConfigurator {
             return new LocatorInfo(LocatorInfo.LocatorStrategy.XPATH, locatorStr);
         }
 
-        // Handle explicit strategy format: "strategy:value"
+        // Handle explicit strategy format: "strategy:value" or "strategy=value"
+        // LLM may return either format
+        int separatorIndex = -1;
+        if (locatorStr.contains("=")) {
+            separatorIndex = locatorStr.indexOf('=');
+        }
         if (locatorStr.contains(":")) {
             int colonIndex = locatorStr.indexOf(':');
-            String strategyPart = locatorStr.substring(0, colonIndex).toLowerCase().trim();
-            String valuePart = locatorStr.substring(colonIndex + 1).trim();
+            // Use the earlier separator (strategy prefix is usually short)
+            if (separatorIndex == -1 || colonIndex < separatorIndex) {
+                separatorIndex = colonIndex;
+            }
+        }
+
+        if (separatorIndex > 0 && separatorIndex < 20) { // Strategy name shouldn't be too long
+            String strategyPart = locatorStr.substring(0, separatorIndex).toLowerCase().trim();
+            String valuePart = locatorStr.substring(separatorIndex + 1).trim();
 
             LocatorInfo.LocatorStrategy strategy = switch (strategyPart) {
                 case "id" -> LocatorInfo.LocatorStrategy.ID;
@@ -309,10 +321,12 @@ public class AutoConfigurator {
                 case "linktext" -> LocatorInfo.LocatorStrategy.LINK_TEXT;
                 case "partiallinktext" -> LocatorInfo.LocatorStrategy.PARTIAL_LINK_TEXT;
                 case "tagname" -> LocatorInfo.LocatorStrategy.TAG_NAME;
-                default -> LocatorInfo.LocatorStrategy.CSS;
+                default -> null; // Unknown strategy, don't parse as strategy:value
             };
 
-            return new LocatorInfo(strategy, valuePart);
+            if (strategy != null) {
+                return new LocatorInfo(strategy, valuePart);
+            }
         }
 
         // Default to CSS selector

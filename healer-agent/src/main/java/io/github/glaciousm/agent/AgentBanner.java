@@ -16,7 +16,7 @@ public class AgentBanner {
     private static final String BANNER_BOTTOM = "+===============================================================+";
 
     /**
-     * Print the startup banner to System.out.
+     * Print the startup banner to System.err (so it's visible in Surefire output).
      */
     public static void print() {
         HealerConfig config = AutoConfigurator.getConfig();
@@ -41,19 +41,21 @@ public class AgentBanner {
             }
         }
 
-        System.out.println();
-        System.out.println(BANNER_TOP);
-        System.out.println("|           INTENT HEALER AGENT - ACTIVE                        |");
-        System.out.println(BANNER_SEP);
-        System.out.printf("|  Mode:       %-48s |%n", mode);
-        System.out.printf("|  Provider:   %-48s |%n", provider);
-        System.out.printf("|  Model:      %-48s |%n", model);
-        System.out.printf("|  Healing:    %-48s |%n", healing);
-        System.out.println(BANNER_BOTTOM);
-        System.out.println();
-        System.out.println("  Self-healing is active for all WebDriver instances.");
-        System.out.println("  Broken locators will be automatically fixed at runtime.");
-        System.out.println();
+        // Use System.err so the banner is visible in Surefire forked JVM output
+        System.err.println();
+        System.err.println(BANNER_TOP);
+        System.err.println("|           INTENT HEALER AGENT - ACTIVE                        |");
+        System.err.println(BANNER_SEP);
+        System.err.printf("|  Mode:       %-48s |%n", mode);
+        System.err.printf("|  Provider:   %-48s |%n", provider);
+        System.err.printf("|  Model:      %-48s |%n", model);
+        System.err.printf("|  Healing:    %-48s |%n", healing);
+        System.err.println(BANNER_BOTTOM);
+        System.err.println();
+        System.err.println("  Self-healing is active for all WebDriver instances.");
+        System.err.println("  Broken locators will be automatically fixed at runtime.");
+        System.err.println();
+        System.err.flush();
     }
 
     /**
@@ -64,6 +66,7 @@ public class AgentBanner {
         String provider = config != null && config.getLlm() != null
                 ? config.getLlm().getProvider()
                 : "mock";
-        System.out.println("[Intent Healer] Agent active - provider: " + provider);
+        System.err.println("[Intent Healer] Agent active - provider: " + provider);
+        System.err.flush();
     }
 }

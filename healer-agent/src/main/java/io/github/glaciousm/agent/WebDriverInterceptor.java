@@ -68,7 +68,6 @@ public class WebDriverInterceptor {
             }
         } catch (Throwable healError) {
             // Healing failed, let the original exception propagate
-            System.err.println("[Intent Healer] Healing failed: " + healError.getMessage());
         }
     }
 }

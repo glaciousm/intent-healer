@@ -86,10 +86,12 @@ public class HerokuappPages {
      * WRONG: By.id("login-btn") - This ID doesn't exist
      * REAL:  <button class="radius" type="submit"><i class="fa fa-2x fa-sign-in"></i> Login</button>
      * HEALED: Should find by class="radius" or type="submit" or text content
+     *
+     * Uses WebDriverWait to simulate real-world automation patterns.
      */
     public void clickLoginButtonWithWrongId(String wrongId) {
         By wrongLocator = By.id(wrongId);
-        driver.findElement(wrongLocator).click();
+        wait.until(ExpectedConditions.elementToBeClickable(wrongLocator)).click();
     }
 
     /**
@@ -125,10 +127,12 @@ public class HerokuappPages {
      * WRONG: By.className("checkbox-input") - This class doesn't exist
      * REAL:  <input type="checkbox"> (no class attribute)
      * HEALED: Should find by type="checkbox"
+     *
+     * Uses WebDriverWait to simulate real-world automation patterns.
      */
     public void clickCheckboxWithWrongClass(String wrongClass) {
         By wrongLocator = By.className(wrongClass);
-        driver.findElement(wrongLocator).click();
+        wait.until(ExpectedConditions.elementToBeClickable(wrongLocator)).click();
     }
 
     public boolean isCheckboxChecked() {
@@ -186,10 +190,12 @@ public class HerokuappPages {
      * WRONG: By.cssSelector("select.dropdown-menu") - Wrong class
      * REAL:  <select id="dropdown">
      * HEALED: Should find by tag "select" or id="dropdown"
+     *
+     * Uses WebDriverWait to simulate real-world automation patterns.
      */
     public void selectDropdownWithWrongCss(String wrongCss, String optionText) {
         By wrongLocator = By.cssSelector(wrongCss);
-        WebElement selectElement = driver.findElement(wrongLocator);
+        WebElement selectElement = wait.until(ExpectedConditions.visibilityOfElementLocated(wrongLocator));
         new Select(selectElement).selectByVisibleText(optionText);
     }
 
