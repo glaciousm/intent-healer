@@ -295,7 +295,7 @@ healer:
   llm:
     provider: ollama
     model: llama3.1
-    endpoint: http://localhost:11434
+    base_url: http://localhost:11434
     timeout_seconds: 120
     max_retries: 2
     temperature: 0.1
@@ -326,8 +326,10 @@ healer:
 
 | Setting | Description | Values |
 |---------|-------------|--------|
-| `mode` | Healing policy | `AUTO_SAFE`, `CONFIRM`, `OFF` |
-| `llm.provider` | LLM provider | `mock`, `openai`, `anthropic`, `ollama` |
+| `mode` | Healing policy | `AUTO_SAFE`, `CONFIRM`, `OFF`, `SUGGEST` |
+| `llm.provider` | LLM provider | `openai`, `anthropic`, `azure`, `ollama`, `bedrock`, `mock` |
+| `llm.base_url` | Provider endpoint URL | URL string (required for ollama, azure) |
+| `llm.api_key_env` | Environment variable containing API key | Env var name (e.g., `OPENAI_API_KEY`) |
 | `guardrails.min_confidence` | Minimum confidence to accept heal | 0.0 - 1.0 |
 | `cache.enabled` | Cache healing decisions | `true`, `false` |
 
@@ -354,13 +356,44 @@ healer:
   mode: AUTO_SAFE
   enabled: true
 
-llm:
-  provider: ollama   # or openai, anthropic, mock
-  model: llama3.1
-  endpoint: http://localhost:11434
+  llm:
+    provider: ollama   # or openai, anthropic, mock
+    model: llama3.1
+    base_url: http://localhost:11434
 ```
 
 #### Step 3: Add Agent to Maven Surefire
+
+**Option A: Using Maven Central (Recommended)**
+
+Add the healer-agent dependency and reference it from your local Maven repository:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.github.glaciousm</groupId>
+        <artifactId>healer-agent</artifactId>
+        <version>1.0.2</version>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+                <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.2/healer-agent-1.0.2.jar</argLine>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+**Option B: Building from Source**
+
+If building Intent Healer from source:
 
 ```xml
 <plugin>
@@ -368,7 +401,7 @@ llm:
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <argLine>
-            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.0.jar
+            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.2.jar
         </argLine>
     </configuration>
 </plugin>
@@ -406,31 +439,50 @@ ollama serve
 ```
 
 ```yaml
-llm:
-  provider: ollama
-  model: llama3.1
-  endpoint: http://localhost:11434
+  llm:
+    provider: ollama
+    model: llama3.1
+    base_url: http://localhost:11434
 ```
 
-### OpenAI / Anthropic (Production)
+### OpenAI / Anthropic / Azure (Production)
 
 For cloud-based AI with higher accuracy:
 
 ```yaml
-llm:
-  provider: openai      # or anthropic
-  model: gpt-4          # or claude-3-sonnet
-  api_key: ${OPENAI_API_KEY}
+  # OpenAI
+  llm:
+    provider: openai
+    model: gpt-4
+    api_key_env: OPENAI_API_KEY
+
+  # OR Anthropic
+  llm:
+    provider: anthropic
+    model: claude-3-sonnet-20240229
+    api_key_env: ANTHROPIC_API_KEY
+
+  # OR Azure OpenAI
+  llm:
+    provider: azure
+    model: gpt-4o                                    # Your deployment name
+    base_url: https://your-resource.openai.azure.com # Base URL only, NOT full path!
+    api_key_env: AZURE_OPENAI_API_KEY
 ```
+
+**Important for Azure:**
+- `base_url` should be just `https://your-resource.openai.azure.com` (NOT the full endpoint path)
+- `model` is your Azure deployment name
+- Set `AZURE_OPENAI_API_VERSION` env var if using a different API version (default: `2024-02-15-preview`)
 
 ### Mock (Testing/Demos)
 
 Uses heuristic matching without any LLM. Good for quick demos or when no LLM is available:
 
 ```yaml
-llm:
-  provider: mock
-  model: heuristic
+  llm:
+    provider: mock
+    model: heuristic
 ```
 
 ---

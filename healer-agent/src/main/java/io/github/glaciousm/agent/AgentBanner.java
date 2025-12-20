@@ -17,14 +17,16 @@ public class AgentBanner {
 
     /**
      * Print the startup banner to System.err (so it's visible in Surefire output).
+     *
+     * @param providerAvailable whether the configured provider is available (has API key, etc.)
      */
-    public static void print() {
+    public static void print(boolean providerAvailable) {
         HealerConfig config = AutoConfigurator.getConfig();
 
         String mode = "AUTO_SAFE";
         String provider = "mock";
         String model = "heuristic";
-        String healing = "ENABLED";
+        String healing = providerAvailable ? "ENABLED" : "DISABLED (missing API key)";
 
         if (config != null) {
             if (config.getMode() != null) {
@@ -44,7 +46,11 @@ public class AgentBanner {
         // Use System.err so the banner is visible in Surefire forked JVM output
         System.err.println();
         System.err.println(BANNER_TOP);
-        System.err.println("|           INTENT HEALER AGENT - ACTIVE                        |");
+        if (providerAvailable) {
+            System.err.println("|           INTENT HEALER AGENT - ACTIVE                        |");
+        } else {
+            System.err.println("|           INTENT HEALER AGENT - INACTIVE                      |");
+        }
         System.err.println(BANNER_SEP);
         System.err.printf("|  Mode:       %-48s |%n", mode);
         System.err.printf("|  Provider:   %-48s |%n", provider);
@@ -52,10 +58,23 @@ public class AgentBanner {
         System.err.printf("|  Healing:    %-48s |%n", healing);
         System.err.println(BANNER_BOTTOM);
         System.err.println();
-        System.err.println("  Self-healing is active for all WebDriver instances.");
-        System.err.println("  Broken locators will be automatically fixed at runtime.");
+        if (providerAvailable) {
+            System.err.println("  Self-healing is active for all WebDriver instances.");
+            System.err.println("  Broken locators will be automatically fixed at runtime.");
+        } else {
+            System.err.println("  WARNING: Healing is DISABLED because the API key is not configured.");
+            System.err.println("  Set the required environment variable (e.g., AZURE_OPENAI_API_KEY)");
+            System.err.println("  or switch to 'mock' provider in healer-config.yml");
+        }
         System.err.println();
         System.err.flush();
+    }
+
+    /**
+     * Print the startup banner (default - checks provider availability).
+     */
+    public static void print() {
+        print(AutoConfigurator.isEnabled());
     }
 
     /**

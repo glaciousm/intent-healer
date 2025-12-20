@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.glaciousm"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.2"
 
 repositories {
     mavenCentral()
@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
-    // Reference healer-core from Maven local repository
-    implementation("io.github.glaciousm:healer-core:1.0.0-SNAPSHOT")
+    // Reference healer-core from Maven Central
+    implementation("io.github.glaciousm:healer-core:1.0.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
 }
@@ -35,7 +35,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("232")
-        untilBuild.set("241.*")
+        untilBuild.set("252.*")  // Support up to 2025.2
     }
 
     signPlugin {

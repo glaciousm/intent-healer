@@ -53,6 +53,23 @@ public class LlmOrchestrator {
     }
 
     /**
+     * Check if a provider is available (has required API keys, etc.).
+     *
+     * @param providerName the name of the provider to check
+     * @return true if the provider is available and configured
+     */
+    public boolean isProviderAvailable(String providerName) {
+        if (providerName == null || providerName.isEmpty()) {
+            return false;
+        }
+        LlmProvider provider = providers.get(providerName.toLowerCase());
+        if (provider == null) {
+            return false;
+        }
+        return provider.isAvailable();
+    }
+
+    /**
      * Evaluate candidates using the configured LLM provider with fallback support.
      */
     public HealDecision evaluateCandidates(

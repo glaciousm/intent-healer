@@ -32,6 +32,7 @@ public class AutoConfigurator {
     private static volatile HealingEngine engine;
     private static volatile LlmOrchestrator llmOrchestrator;
     private static volatile boolean initialized = false;
+    private static volatile boolean providerAvailable = false;
 
     // Track registered drivers (WeakHashMap allows garbage collection)
     private static final Map<WebDriver, SnapshotBuilder> driverSnapshots =
@@ -60,11 +61,19 @@ public class AutoConfigurator {
                 // Create LLM orchestrator
                 llmOrchestrator = new LlmOrchestrator();
 
-                // Wire the engine with snapshot and LLM callbacks
-                wireEngine();
+                // Check if the configured provider is available (has API key, etc.)
+                String providerName = config.getLlm() != null ? config.getLlm().getProvider() : "mock";
+                providerAvailable = llmOrchestrator.isProviderAvailable(providerName);
 
-                logger.info("Auto-configured healing engine with provider: {}",
-                        config.getLlm() != null ? config.getLlm().getProvider() : "mock");
+                if (!providerAvailable) {
+                    logger.warn("LLM provider '{}' is not available (missing API key or configuration). " +
+                            "Healing will be DISABLED. Set the required environment variable or use 'mock' provider.",
+                            providerName);
+                } else {
+                    // Wire the engine with snapshot and LLM callbacks
+                    wireEngine();
+                    logger.info("Auto-configured healing engine with provider: {}", providerName);
+                }
             } else {
                 logger.info("Healing is disabled in configuration");
             }
@@ -77,10 +86,10 @@ public class AutoConfigurator {
     }
 
     /**
-     * Check if healing is enabled.
+     * Check if healing is enabled and the provider is available.
      */
     public static boolean isEnabled() {
-        return config != null && config.isEnabled() && engine != null;
+        return config != null && config.isEnabled() && engine != null && providerAvailable;
     }
 
     /**

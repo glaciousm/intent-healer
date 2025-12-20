@@ -2,7 +2,7 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://openjdk.org/)
-[![Maven Central](https://img.shields.io/badge/Maven_Central-coming_soon-lightgrey.svg)]()
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.glaciousm/intent-healer.svg)](https://central.sonatype.com/artifact/io.github.glaciousm/intent-healer)
 [![Heal Success](https://img.shields.io/badge/Heal_Success-89%25-green.svg)]()
 [![False Heal Rate](https://img.shields.io/badge/False_Heal-15%25-red.svg)]()
 
@@ -34,17 +34,17 @@ Intent Healer is an intelligent test automation framework that automatically fix
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-selenium</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-llm</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -81,17 +81,35 @@ driver.findElement(By.id("some-locator")).click();
 
 **Want self-healing without changing any code?** Use the Java Agent approach:
 
-```bash
-# 1. Build the agent JAR
-mvn clean install -pl healer-agent
+### Option A: Using Maven Central (Recommended)
 
-# 2. Create healer-config.yml in src/test/resources (see above)
+```xml
+<!-- Add dependency -->
+<dependency>
+    <groupId>io.github.glaciousm</groupId>
+    <artifactId>healer-agent</artifactId>
+    <version>1.0.2</version>
+    <scope>test</scope>
+</dependency>
 
-# 3. Run tests with the agent
-mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.0.jar"
+<!-- Configure Surefire plugin -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <configuration>
+        <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.2/healer-agent-1.0.2.jar</argLine>
+    </configuration>
+</plugin>
 ```
 
-That's it! The agent automatically intercepts all WebDriver instances (Chrome, Firefox, Edge, Safari) and adds self-healing capability with zero code changes.
+### Option B: Building from Source
+
+```bash
+mvn clean install -pl healer-agent
+mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.2.jar"
+```
+
+That's it! The agent automatically intercepts all WebDriver instances and adds self-healing capability with zero code changes.
 
 See the [User Guide](docs/USER_GUIDE.md#java-agent-zero-code-integration) for detailed setup instructions.
 
@@ -284,19 +302,17 @@ Add the report plugin to your Cucumber runner:
 ```yaml
 healer:
   # Healing mode
-  mode: AUTO_SAFE           # AUTO_SAFE, CONFIRM, OFF
+  mode: AUTO_SAFE           # AUTO_SAFE, CONFIRM, OFF, SUGGEST
   enabled: true
 
   # LLM provider
   llm:
     provider: ollama        # mock, ollama, openai, anthropic, azure, bedrock
-    model: llama3.2
-    api_key: ${API_KEY}     # Environment variable
+    model: llama3.1
+    base_url: http://localhost:11434  # required for ollama/azure
+    api_key_env: OPENAI_API_KEY       # env var name containing the key
     timeout_seconds: 60
     max_retries: 2
-    fallback_providers:     # Fallback chain
-      - openai
-      - mock
 
   # Guardrails
   guardrails:
@@ -353,29 +369,50 @@ public void clickSubmit() {
 ## LLM Providers
 
 ### Mock (No External LLM)
-Heuristic-based matching using element attributes, text, and DOM position.
+Heuristic-based matching using element attributes, text, and DOM position. No API key needed.
 
-### Ollama (Local)
+### Ollama (Local - Free)
 ```bash
-ollama pull llama3.2
+ollama pull llama3.1
 ollama serve
+```
+```yaml
+healer:
+  llm:
+    provider: ollama
+    model: llama3.1
+    base_url: http://localhost:11434
 ```
 
 ### OpenAI
 ```yaml
-llm:
-  provider: openai
-  model: gpt-4
-  api_key: ${OPENAI_API_KEY}
+healer:
+  llm:
+    provider: openai
+    model: gpt-4o-mini
+    api_key_env: OPENAI_API_KEY  # reads from environment variable
 ```
 
 ### Anthropic Claude
 ```yaml
-llm:
-  provider: anthropic
-  model: claude-3-sonnet
-  api_key: ${ANTHROPIC_API_KEY}
+healer:
+  llm:
+    provider: anthropic
+    model: claude-3-haiku-20240307
+    api_key_env: ANTHROPIC_API_KEY
 ```
+
+### Azure OpenAI
+```yaml
+healer:
+  llm:
+    provider: azure
+    model: gpt-4o                                    # Your deployment name
+    base_url: https://your-resource.openai.azure.com # Base URL only!
+    api_key_env: AZURE_OPENAI_API_KEY
+```
+
+> **Important:** `base_url` must be just the base URL (e.g., `https://your-resource.openai.azure.com`), NOT the full endpoint path. The `model` field is your Azure deployment name. Set `AZURE_OPENAI_API_VERSION` env var if needed (default: `2024-02-15-preview`).
 
 ---
 

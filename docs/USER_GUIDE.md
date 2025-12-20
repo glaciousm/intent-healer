@@ -83,7 +83,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-core</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>test</scope>
     </dependency>
 
@@ -91,7 +91,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-selenium</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>test</scope>
     </dependency>
 
@@ -99,7 +99,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-llm</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>test</scope>
     </dependency>
 
@@ -108,7 +108,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-cucumber</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>test</scope>
     </dependency>
 
@@ -116,7 +116,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-junit</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>test</scope>
     </dependency>
 
@@ -124,7 +124,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-testng</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>test</scope>
     </dependency>
 </dependencies>
@@ -159,25 +159,25 @@ healer:
   mode: AUTO_SAFE
   enabled: true
 
-llm:
-  provider: ollama
-  model: llama3.1
-  endpoint: http://localhost:11434
-  timeout_seconds: 120
+  llm:
+    provider: ollama
+    model: llama3.1
+    base_url: http://localhost:11434
+    timeout_seconds: 120
 
-guardrails:
-  min_confidence: 0.75
-  max_heals_per_scenario: 10
+  guardrails:
+    min_confidence: 0.75
+    max_heals_per_scenario: 10
 
-cache:
-  enabled: true
-  ttl_hours: 24
+  cache:
+    enabled: true
+    ttl_hours: 24
 
-report:
-  output_dir: target/healer-reports
-  formats:
-    - json
-    - html
+  report:
+    output_dir: target/healer-reports
+    formats:
+      - json
+      - html
 ```
 
 > **Prerequisite:** Install Ollama and pull the model first:
@@ -192,24 +192,24 @@ healer:
   mode: AUTO_SAFE
   enabled: true
 
-llm:
-  provider: mock           # Uses heuristic matching - no LLM needed
-  model: heuristic
-  timeout_seconds: 30
+  llm:
+    provider: mock           # Uses heuristic matching - no LLM needed
+    model: heuristic
+    timeout_seconds: 30
 
-guardrails:
-  min_confidence: 0.70
-  max_heals_per_scenario: 10
+  guardrails:
+    min_confidence: 0.70
+    max_heals_per_scenario: 10
 
-cache:
-  enabled: true
-  ttl_hours: 24
+  cache:
+    enabled: true
+    ttl_hours: 24
 
-report:
-  output_dir: target/healer-reports
-  formats:
-    - json
-    - html
+  report:
+    output_dir: target/healer-reports
+    formats:
+      - json
+      - html
 ```
 
 **Option C: OpenAI - Cloud API (production)**
@@ -219,26 +219,26 @@ healer:
   mode: AUTO_SAFE
   enabled: true
 
-llm:
-  provider: openai
-  model: gpt-4o-mini       # Cost-effective model
-  api_key_env: OPENAI_API_KEY
-  timeout_seconds: 30
-  confidence_threshold: 0.80
+  llm:
+    provider: openai
+    model: gpt-4o-mini       # Cost-effective model
+    api_key_env: OPENAI_API_KEY
+    timeout_seconds: 30
+    confidence_threshold: 0.80
 
-guardrails:
-  min_confidence: 0.80
-  max_heals_per_scenario: 5
+  guardrails:
+    min_confidence: 0.80
+    max_heals_per_scenario: 5
 
-cache:
-  enabled: true
-  ttl_hours: 24
+  cache:
+    enabled: true
+    ttl_hours: 24
 
-report:
-  output_dir: target/healer-reports
-  formats:
-    - json
-    - html
+  report:
+    output_dir: target/healer-reports
+    formats:
+      - json
+      - html
 ```
 
 ### Step 3: Set Up API Key (skip if using mock provider)
@@ -341,7 +341,7 @@ healer:
 llm:
   provider: ollama              # Or: mock (no LLM), openai, anthropic
   model: llama3.1
-  endpoint: http://localhost:11434
+  base_url: http://localhost:11434
 
 cache:
   enabled: true
@@ -451,7 +451,7 @@ healer:
 llm:
   provider: ollama
   model: llama3.1
-  endpoint: http://localhost:11434
+  base_url: http://localhost:11434
   timeout_seconds: 120
   max_retries: 2
   temperature: 0.1
@@ -764,7 +764,7 @@ Configure multiple providers for reliability:
 llm:
   provider: ollama
   model: llama3.1
-  endpoint: http://localhost:11434
+  base_url: http://localhost:11434
   timeout_seconds: 120
 
   # Fallback chain: tried in order if primary fails
@@ -798,7 +798,7 @@ The Intent Healer Java Agent automatically intercepts all WebDriver instances an
 # Build from source
 mvn clean install -pl healer-agent
 
-# The fat JAR is at: healer-agent/target/healer-agent-1.0.0.jar
+# The fat JAR is at: healer-agent/target/healer-agent-1.0.2.jar
 ```
 
 ### Step 2: Create Configuration File
@@ -813,7 +813,7 @@ healer:
 llm:
   provider: ollama   # Recommended: local LLM (or openai, anthropic, mock)
   model: llama3.1
-  endpoint: http://localhost:11434
+  base_url: http://localhost:11434
   timeout_seconds: 120
 
 cache:
@@ -833,7 +833,7 @@ cache:
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <argLine>
-            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.0.jar
+            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.2.jar
         </argLine>
     </configuration>
 </plugin>
@@ -842,21 +842,21 @@ cache:
 **Option B: Command Line**
 
 ```bash
-mvn test -DargLine="-javaagent:/path/to/healer-agent-1.0.0.jar"
+mvn test -DargLine="-javaagent:/path/to/healer-agent-1.0.2.jar"
 ```
 
 **Option C: Gradle**
 
 ```kotlin
 test {
-    jvmArgs("-javaagent:${rootProject.projectDir}/healer-agent/build/libs/healer-agent-1.0.0.jar")
+    jvmArgs("-javaagent:${rootProject.projectDir}/healer-agent/build/libs/healer-agent-1.0.2.jar")
 }
 ```
 
 **Option D: Direct JVM Execution**
 
 ```bash
-java -javaagent:healer-agent-1.0.0.jar \
+java -javaagent:healer-agent-1.0.2.jar \
      -jar your-test-runner.jar
 ```
 
@@ -1273,12 +1273,15 @@ llm:
 
 #### Azure OpenAI
 ```yaml
-llm:
-  provider: azure
-  model: your-deployment-name
-  api_key_env: AZURE_OPENAI_API_KEY
-  base_url: https://your-resource.openai.azure.com
+healer:
+  llm:
+    provider: azure
+    model: your-deployment-name                        # Your Azure deployment name
+    base_url: https://your-resource.openai.azure.com   # Base URL only, NOT full path!
+    api_key_env: AZURE_OPENAI_API_KEY
 ```
+
+> **Important:** The `base_url` must be just the base URL (e.g., `https://your-resource.openai.azure.com`), NOT the full endpoint path like `https://...openai.azure.com/openai/deployments/gpt-4o/chat/completions`. The code constructs the full path automatically using your `model` (deployment name).
 
 #### AWS Bedrock
 ```yaml
@@ -1394,7 +1397,7 @@ healer:
 llm:
   provider: ollama
   model: llama3.1              # or mistral, codellama, phi3, etc.
-  endpoint: http://localhost:11434
+  base_url: http://localhost:11434
   timeout_seconds: 120         # Local models may need more time
   max_retries: 2
   temperature: 0.1             # Lower = more consistent results

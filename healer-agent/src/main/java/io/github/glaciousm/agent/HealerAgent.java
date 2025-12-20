@@ -1,5 +1,8 @@
 package io.github.glaciousm.agent;
 
+import io.github.glaciousm.core.config.HealerConfig;
+import io.github.glaciousm.core.engine.HealingReportGenerator;
+import io.github.glaciousm.core.engine.HealingSummary;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
@@ -85,6 +88,23 @@ public class HealerAgent {
 
             // Install ByteBuddy transformer
             installTransformer(inst);
+
+            // Register shutdown hook to print healing summary and generate reports
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    // Print console summary
+                    HealingSummary.getInstance().printSummary();
+
+                    // Generate HTML/JSON reports
+                    HealerConfig cfg = AutoConfigurator.getConfig();
+                    if (cfg != null && cfg.getReport() != null && cfg.getReport().isEnabled()) {
+                        HealingReportGenerator generator = new HealingReportGenerator(cfg.getReport());
+                        generator.generateReports();
+                    }
+                } catch (Exception e) {
+                    logger.debug("Failed to generate healing reports: {}", e.getMessage());
+                }
+            }, "intent-healer-summary"));
 
             logger.info("Intent Healer Agent initialized successfully via {}", mode);
 

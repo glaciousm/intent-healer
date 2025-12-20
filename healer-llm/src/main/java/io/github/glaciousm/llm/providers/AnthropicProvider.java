@@ -40,6 +40,11 @@ public class AnthropicProvider implements LlmProvider {
             LlmConfig config) {
 
         String apiKey = getApiKey(config);
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new LlmException(
+                "Anthropic API key not configured. Set ANTHROPIC_API_KEY environment variable or 'api_key_env' in healer-config.yml.",
+                getProviderName(), config.getModel());
+        }
         String prompt = promptBuilder.buildHealingPrompt(failure, snapshot, intent);
 
         logger.debug("Calling Anthropic with model: {}", config.getModel());

@@ -1,72 +1,63 @@
 # Intent Healer IntelliJ Plugin
 
-This module provides IntelliJ IDEA integration for Intent Healer.
+IntelliJ IDEA plugin for Intent Healer - view heal history, manage trust levels, and get locator suggestions.
 
-## Building the Plugin
+## Installation
 
-This module requires the IntelliJ Platform SDK and is best built using Gradle rather than Maven.
-
-### Option 1: Build with Gradle (Recommended)
+### Option 1: Build from Source
 
 ```bash
 cd healer-intellij
-./gradlew buildPlugin
+.\gradlew.bat buildPlugin   # Windows
+./gradlew buildPlugin       # Mac/Linux
 ```
 
-The plugin ZIP will be created in `build/distributions/`.
-
-### Option 2: Build with Maven
-
-To build with Maven, you need to activate the `build-intellij-plugin` profile:
-
-```bash
-mvn clean install -Pbuild-intellij-plugin
-```
-
-**Note:** Maven build requires IntelliJ Platform SDK dependencies which are downloaded from JetBrains repositories.
-
-### Installing the Plugin
+Then install the ZIP from `build/distributions/healer-intellij-1.0.2.zip`:
 
 1. Open IntelliJ IDEA
-2. Go to `Settings` → `Plugins` → `⚙️` → `Install Plugin from Disk...`
-3. Select the built plugin ZIP file
-4. Restart IntelliJ IDEA
+2. Go to **Settings** → **Plugins** → **⚙️** → **Install Plugin from Disk...**
+3. Select the ZIP file
+4. Restart IntelliJ
 
-## Development Setup
-
-For development, it's recommended to use Gradle with the IntelliJ Gradle Plugin:
+### Option 2: Run in Debug Mode
 
 ```bash
-./gradlew runIde
+cd healer-intellij
+.\gradlew.bat runIde   # Windows
+./gradlew runIde       # Mac/Linux
 ```
 
-This will start a sandboxed IntelliJ IDEA instance with the plugin installed.
+This starts a sandboxed IntelliJ with the plugin installed for testing.
 
 ## Features
 
-- **Heal History Viewer** - Browse and manage heal history
-- **Trust Dashboard** - Monitor trust levels and healing statistics
-- **Quick Actions** - Accept, reject, or blacklist heals from the IDE
-- **Locator Suggestions** - Get suggestions for more stable locators
-- **Intent Annotations** - Line markers for @Intent annotations
+| Feature | Access |
+|---------|--------|
+| **Dashboard** | View → Tool Windows → Intent Healer |
+| **Settings** | Settings → Tools → Intent Healer |
+| **Heal History** | Tools → Intent Healer → View Heal History |
+| **Live Events** | Real-time heal event monitoring |
+| **Locator Suggestions** | Right-click in editor → Suggest Stable Locator |
 
 ## Configuration
 
-Configure the plugin at: `Settings` → `Tools` → `Intent Healer`
+1. Go to **Settings** → **Tools** → **Intent Healer**
+2. Configure:
+   - **Healer Mode**: OFF / SUGGEST / AUTO_SAFE / AUTO_ALL
+   - **Cache Directory**: Location for heal cache
+   - **Enable Notifications**: Show heal notifications
+   - **Max History Entries**: Number of entries to keep
 
-## Module Structure
+## Using the Dashboard
 
-```
-healer-intellij/
-├── src/main/java/
-│   └── io/github/glaciousm/intellij/
-│       ├── actions/          # IDE actions
-│       ├── services/         # Project services
-│       ├── settings/         # Plugin settings
-│       └── ui/              # UI components
-├── src/main/resources/
-│   └── META-INF/
-│       └── plugin.xml       # Plugin descriptor
-├── build.gradle.kts         # Gradle build (recommended)
-└── pom.xml                  # Maven build (alternative)
-```
+1. Open the **Intent Healer** tool window (right sidebar or View menu)
+2. **Dashboard Tab**: View real-time healing activity and statistics
+3. **History Tab**: Browse past heals
+   - Double-click to view details
+   - Use **Accept/Reject/Blacklist** buttons
+4. **Live Tab**: Watch heal events as they happen
+
+## Requirements
+
+- IntelliJ IDEA 2023.2 or later
+- Java 17+

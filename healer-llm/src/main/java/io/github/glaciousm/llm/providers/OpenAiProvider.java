@@ -39,6 +39,11 @@ public class OpenAiProvider implements LlmProvider {
             LlmConfig config) {
 
         String apiKey = getApiKey(config);
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new LlmException(
+                "OpenAI API key not configured. Set OPENAI_API_KEY environment variable or 'api_key_env' in healer-config.yml.",
+                getProviderName(), config.getModel());
+        }
         String prompt = promptBuilder.buildHealingPrompt(failure, snapshot, intent);
 
         logger.debug("Calling OpenAI with model: {}", config.getModel());

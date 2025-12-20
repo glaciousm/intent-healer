@@ -117,6 +117,18 @@ public class AzureOpenAiProvider implements LlmProvider {
         String deployment = getDeployment(config);
         String apiVersion = getApiVersion(config);
 
+        // Validate required configuration
+        if (endpoint == null || endpoint.isEmpty()) {
+            throw new LlmException(
+                "Azure OpenAI endpoint not configured. Set 'base_url' in healer-config.yml or AZURE_OPENAI_ENDPOINT environment variable.",
+                getProviderName(), deployment);
+        }
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new LlmException(
+                "Azure OpenAI API key not configured. Set AZURE_OPENAI_API_KEY environment variable.",
+                getProviderName(), deployment);
+        }
+
         // Build URL
         String url = String.format("%s/openai/deployments/%s/chat/completions?api-version=%s",
                 endpoint.replaceAll("/$", ""), deployment, apiVersion);
