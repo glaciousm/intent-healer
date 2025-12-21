@@ -12,7 +12,7 @@ cd healer-intellij
 ./gradlew buildPlugin       # Mac/Linux
 ```
 
-Then install the ZIP from `build/distributions/healer-intellij-1.0.2.zip`:
+Then install the ZIP from `build/distributions/healer-intellij-1.0.3.zip`:
 
 1. Open IntelliJ IDEA
 2. Go to **Settings** → **Plugins** → **⚙️** → **Install Plugin from Disk...**

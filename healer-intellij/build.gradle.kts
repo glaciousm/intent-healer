@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.glaciousm"
-version = "1.0.2"
+version = "1.0.3"
 
 repositories {
     mavenCentral()
@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     // Reference healer-core from Maven Central
-    implementation("io.github.glaciousm:healer-core:1.0.2")
+    implementation("io.github.glaciousm:healer-core:1.0.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
 }

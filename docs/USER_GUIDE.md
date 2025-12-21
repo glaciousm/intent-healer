@@ -83,7 +83,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-core</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 
@@ -91,7 +91,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-selenium</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 
@@ -99,7 +99,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-llm</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 
@@ -108,7 +108,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-cucumber</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 
@@ -116,7 +116,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-junit</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 
@@ -124,7 +124,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-testng</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 </dependencies>
@@ -798,7 +798,7 @@ The Intent Healer Java Agent automatically intercepts all WebDriver instances an
 # Build from source
 mvn clean install -pl healer-agent
 
-# The fat JAR is at: healer-agent/target/healer-agent-1.0.2.jar
+# The fat JAR is at: healer-agent/target/healer-agent-1.0.3.jar
 ```
 
 ### Step 2: Create Configuration File
@@ -833,7 +833,7 @@ cache:
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <argLine>
-            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.2.jar
+            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.3.jar
         </argLine>
     </configuration>
 </plugin>
@@ -842,21 +842,21 @@ cache:
 **Option B: Command Line**
 
 ```bash
-mvn test -DargLine="-javaagent:/path/to/healer-agent-1.0.2.jar"
+mvn test -DargLine="-javaagent:/path/to/healer-agent-1.0.3.jar"
 ```
 
 **Option C: Gradle**
 
 ```kotlin
 test {
-    jvmArgs("-javaagent:${rootProject.projectDir}/healer-agent/build/libs/healer-agent-1.0.2.jar")
+    jvmArgs("-javaagent:${rootProject.projectDir}/healer-agent/build/libs/healer-agent-1.0.3.jar")
 }
 ```
 
 **Option D: Direct JVM Execution**
 
 ```bash
-java -javaagent:healer-agent-1.0.2.jar \
+java -javaagent:healer-agent-1.0.3.jar \
      -jar your-test-runner.jar
 ```
 

@@ -3,6 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Java](https://img.shields.io/badge/Java-21+-orange.svg)](https://openjdk.org/)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.glaciousm/intent-healer.svg)](https://central.sonatype.com/artifact/io.github.glaciousm/intent-healer)
+[![CI](https://github.com/glaciousm/intent-healer/actions/workflows/ci.yml/badge.svg)](https://github.com/glaciousm/intent-healer/actions/workflows/ci.yml)
 [![Heal Success](https://img.shields.io/badge/Heal_Success-89%25-green.svg)]()
 [![False Heal Rate](https://img.shields.io/badge/False_Heal-15%25-red.svg)]()
 
@@ -25,6 +26,30 @@ Intent Healer is an intelligent test automation framework that automatically fix
 
 ---
 
+## What Intent Healer Does (and Doesn't)
+
+**Guarantees:**
+- Full traceability of all healing decisions
+- No silent healing in CONFIRM mode
+- Configurable confidence thresholds
+- Graceful fallback when LLM is unavailable
+
+**Does NOT guarantee:**
+- Semantic correctness (healing finds elements, not intent)
+- Zero false positives (15% false heal rate is honest)
+- Elimination of flaky tests (addresses locator rot, not race conditions)
+
+---
+
+## When NOT to Use Intent Healer
+
+- **Assertion steps**: Don't heal elements you're verifying (use `policy = OFF`)
+- **Security-critical flows**: Payment, authentication (use `forbidden_url_patterns`)
+- **Performance testing**: Healing adds latency (~2-5s per heal)
+- **When locators are intentionally dynamic**: Some frameworks regenerate IDs by design
+
+---
+
 ## Quick Start
 
 ### 1. Add Dependencies
@@ -34,17 +59,17 @@ Intent Healer is an intelligent test automation framework that automatically fix
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-core</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-selenium</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-llm</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
@@ -88,7 +113,7 @@ driver.findElement(By.id("some-locator")).click();
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-agent</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <scope>test</scope>
 </dependency>
 
@@ -97,7 +122,7 @@ driver.findElement(By.id("some-locator")).click();
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
-        <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.2/healer-agent-1.0.2.jar</argLine>
+        <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.3/healer-agent-1.0.3.jar</argLine>
     </configuration>
 </plugin>
 ```
@@ -106,7 +131,7 @@ driver.findElement(By.id("some-locator")).click();
 
 ```bash
 mvn clean install -pl healer-agent
-mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.2.jar"
+mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.3.jar"
 ```
 
 That's it! The agent automatically intercepts all WebDriver instances and adds self-healing capability with zero code changes.

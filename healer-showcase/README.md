@@ -373,7 +373,7 @@ Add the healer-agent dependency and reference it from your local Maven repositor
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-agent</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
         <scope>test</scope>
     </dependency>
 </dependencies>
@@ -384,7 +384,7 @@ Add the healer-agent dependency and reference it from your local Maven repositor
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-                <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.2/healer-agent-1.0.2.jar</argLine>
+                <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.3/healer-agent-1.0.3.jar</argLine>
             </configuration>
         </plugin>
     </plugins>
@@ -401,7 +401,7 @@ If building Intent Healer from source:
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <argLine>
-            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.2.jar
+            -javaagent:${project.basedir}/../healer-agent/target/healer-agent-1.0.3.jar
         </argLine>
     </configuration>
 </plugin>
