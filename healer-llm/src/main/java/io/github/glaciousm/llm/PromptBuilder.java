@@ -1,6 +1,10 @@
 package io.github.glaciousm.llm;
 
-import io.github.glaciousm.core.model.*;
+import io.github.glaciousm.core.model.ElementRect;
+import io.github.glaciousm.core.model.ElementSnapshot;
+import io.github.glaciousm.core.model.FailureContext;
+import io.github.glaciousm.core.model.IntentContract;
+import io.github.glaciousm.core.model.UiSnapshot;
 
 import java.util.List;
 
@@ -107,6 +111,183 @@ public class PromptBuilder {
                 nullSafe(snapshot.getDetectedLanguage()),
                 formatElementsForPrompt(snapshot.getInteractiveElements())
         );
+    }
+
+    /**
+     * Build a vision-enhanced healing prompt for multimodal LLMs.
+     * This prompt works alongside a screenshot for visual analysis.
+     */
+    public String buildVisionHealingPrompt(FailureContext failure, UiSnapshot snapshot, IntentContract intent) {
+        return """
+            You are an expert test automation engineer analyzing a UI test failure.
+            You have been provided with a screenshot of the current page state.
+
+            ## Test Context
+
+            **Feature:** %s
+            **Scenario:** %s
+            **Step:** %s %s
+            **Intent:** %s
+            **Intent Description:** %s
+
+            ## Failure Information
+
+            **Exception:** %s
+            **Original Locator:** %s (strategy: %s)
+            **Action:** %s
+
+            ## Current Page State
+
+            **URL:** %s
+            **Title:** %s
+
+            ## Available Interactive Elements (with visual positions)
+
+            %s
+
+            ## Your Task
+
+            **IMPORTANT: Use both the screenshot AND the element data to make your decision.**
+
+            1. Look at the screenshot to understand the visual layout and context
+            2. Match the original intent to visible elements in the screenshot
+            3. Cross-reference with the element data below to find the correct index
+            4. Consider visual cues like:
+               - Button appearance and position
+               - Form field locations relative to labels
+               - Navigation menu structure
+               - Color and visual hierarchy
+
+            **Important Guidelines:**
+            - Focus on SEMANTIC PURPOSE, not exact text matching
+            - Use the screenshot to understand visual context and element relationships
+            - The element's visual appearance and position matter
+            - If multiple candidates could work, use visual context to choose the most likely
+            - If no element clearly matches the intent visually and semantically, respond that healing is not possible
+            - NEVER suggest elements that could cause destructive actions unless the original intent was destructive
+
+            ## Response Format
+
+            Respond with ONLY a JSON object in this exact format:
+
+            ```json
+            {
+              "can_heal": true|false,
+              "confidence": 0.0-1.0,
+              "selected_element_index": <index>|null,
+              "reasoning": "<2-3 sentences explaining your decision, referencing visual cues>",
+              "alternative_indices": [<other possible indices>],
+              "warnings": ["<any concerns about this heal>"],
+              "refusal_reason": "<if can_heal is false, explain why>"|null
+            }
+            ```
+
+            Confidence guide:
+            - 0.95+: Nearly certain (visually obvious match, clear purpose)
+            - 0.85-0.94: High confidence (visual context confirms semantic match)
+            - 0.75-0.84: Moderate confidence (likely match, some visual ambiguity)
+            - Below 0.75: Do not heal, set can_heal to false
+            """.formatted(
+                nullSafe(failure.getFeatureName()),
+                nullSafe(failure.getScenarioName()),
+                nullSafe(failure.getStepKeyword()),
+                nullSafe(failure.getStepText()),
+                nullSafe(intent.getAction()),
+                nullSafe(intent.getDescription()),
+                nullSafe(failure.getExceptionType()),
+                failure.getOriginalLocator() != null ? failure.getOriginalLocator().getValue() : "unknown",
+                failure.getOriginalLocator() != null ? failure.getOriginalLocator().getStrategy() : "unknown",
+                failure.getActionType(),
+                nullSafe(snapshot.getUrl()),
+                nullSafe(snapshot.getTitle()),
+                formatElementsForVisionPrompt(snapshot.getInteractiveElements())
+        );
+    }
+
+    /**
+     * Format elements with visual position info for vision prompts.
+     */
+    private String formatElementsForVisionPrompt(List<ElementSnapshot> elements) {
+        if (elements == null || elements.isEmpty()) {
+            return "No interactive elements found on the page.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        int count = Math.min(elements.size(), MAX_ELEMENTS_IN_PROMPT);
+
+        for (int i = 0; i < count; i++) {
+            ElementSnapshot el = elements.get(i);
+            sb.append(formatElementWithPosition(el)).append("\n\n");
+        }
+
+        if (elements.size() > MAX_ELEMENTS_IN_PROMPT) {
+            sb.append("... and %d more elements".formatted(elements.size() - MAX_ELEMENTS_IN_PROMPT));
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Format element with visual position info for vision prompts.
+     */
+    private String formatElementWithPosition(ElementSnapshot el) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("**[%d]** `<%s>`".formatted(el.getIndex(), el.getTagName()));
+
+        // Add visual position hint if available
+        if (el.getRect() != null) {
+            String position = describePosition(el.getRect());
+            sb.append(" - %s\n".formatted(position));
+        } else {
+            sb.append("\n");
+        }
+
+        if (el.getId() != null && !el.getId().isEmpty()) {
+            sb.append("- id: %s\n".formatted(el.getId()));
+        }
+        if (el.getText() != null && !el.getText().isEmpty()) {
+            sb.append("- text: \"%s\"\n".formatted(truncate(el.getText(), MAX_TEXT_LENGTH)));
+        }
+        if (el.getAriaLabel() != null && !el.getAriaLabel().isEmpty()) {
+            sb.append("- aria-label: \"%s\"\n".formatted(el.getAriaLabel()));
+        }
+        if (el.getPlaceholder() != null && !el.getPlaceholder().isEmpty()) {
+            sb.append("- placeholder: \"%s\"\n".formatted(el.getPlaceholder()));
+        }
+        sb.append("- visible: %s, enabled: %s\n".formatted(el.isVisible(), el.isEnabled()));
+
+        return sb.toString();
+    }
+
+    /**
+     * Describe element position in human-readable terms for visual context.
+     */
+    private String describePosition(ElementRect rect) {
+        if (rect == null) return "position unknown";
+
+        // Assume typical viewport dimensions
+        int viewportWidth = 1920;
+        int viewportHeight = 1080;
+
+        String horizontal;
+        if (rect.getX() < viewportWidth / 3) {
+            horizontal = "left";
+        } else if (rect.getX() > viewportWidth * 2 / 3) {
+            horizontal = "right";
+        } else {
+            horizontal = "center";
+        }
+
+        String vertical;
+        if (rect.getY() < 200) {
+            vertical = "top";
+        } else if (rect.getY() > viewportHeight - 200) {
+            vertical = "bottom";
+        } else {
+            vertical = "middle";
+        }
+
+        return "located at %s-%s (%d,%d)".formatted(vertical, horizontal, rect.getX(), rect.getY());
     }
 
     /**

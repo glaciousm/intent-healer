@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>intent-healer</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>healer-showcase</artifactId>
@@ -85,6 +85,8 @@
                         -javaagent:${project.basedir}/../healer-agent/target/healer-agent-${project.version}.jar
                         ${surefireArgLine}
                     </argLine>
+                    <!-- Disable retries - healing works on first run -->
+                    <rerunFailingTestsCount>0</rerunFailingTestsCount>
                     <properties>
                         <configurationParameters>
                             cucumber.junit-platform.naming-strategy=long

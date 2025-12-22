@@ -117,16 +117,19 @@ Include:
 
 | Module | Purpose |
 |--------|---------|
-| `healer-core` | Core engine, models, configuration |
-| `healer-llm` | LLM provider implementations |
-| `healer-selenium` | WebDriver wrapper |
+| `healer-core` | Core engine, models, configuration, healing logic |
+| `healer-llm` | LLM providers (OpenAI, Anthropic, Ollama, Azure, Bedrock) |
+| `healer-selenium` | Selenium WebDriver wrapper with self-healing |
+| `healer-playwright` | Playwright integration with self-healing |
 | `healer-agent` | Java Agent for zero-code integration |
-| `healer-cucumber` | Cucumber integration |
-| `healer-testng` | TestNG integration |
-| `healer-junit` | JUnit 5 integration |
-| `healer-report` | Report generation |
+| `healer-cucumber` | Cucumber integration with @Intent annotations |
+| `healer-testng` | TestNG listener integration |
+| `healer-junit` | JUnit 5 extension integration |
+| `healer-report` | HTML/JSON report generation |
 | `healer-cli` | Command-line interface |
-| `healer-intellij` | IDE plugin |
+| `healer-intellij` | IntelliJ IDEA plugin |
+| `healer-benchmark` | Benchmark suite (35 scenarios) |
+| `healer-showcase` | Demo project with examples |
 
 ## Questions?
 

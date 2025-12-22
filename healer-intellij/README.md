@@ -1,6 +1,23 @@
 # Intent Healer IntelliJ Plugin
 
-IntelliJ IDEA plugin for Intent Healer - view heal history, manage trust levels, and get locator suggestions.
+[![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ%20IDEA-2023.2+-purple.svg)](https://www.jetbrains.com/idea/)
+[![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://openjdk.org/)
+
+> **IntelliJ IDEA plugin for Intent Healer** - View heal history, manage trust levels, monitor live healing events, and get locator suggestions directly in your IDE.
+
+---
+
+## Features
+
+| Feature | Description | Access |
+|---------|-------------|--------|
+| **Dashboard** | Real-time healing statistics and activity | View → Tool Windows → Intent Healer |
+| **Heal History** | Browse and manage past healing decisions | Tools → Intent Healer → View Heal History |
+| **Live Events** | Monitor heal events as they happen | Intent Healer tool window → Live tab |
+| **Locator Suggestions** | Get stable locator recommendations | Right-click in editor → Suggest Stable Locator |
+| **Settings** | Configure healing behavior | Settings → Tools → Intent Healer |
+
+---
 
 ## Installation
 
@@ -8,56 +25,104 @@ IntelliJ IDEA plugin for Intent Healer - view heal history, manage trust levels,
 
 ```bash
 cd healer-intellij
-.\gradlew.bat buildPlugin   # Windows
-./gradlew buildPlugin       # Mac/Linux
+
+# Windows
+.\gradlew.bat buildPlugin
+
+# macOS / Linux
+./gradlew buildPlugin
 ```
 
-Then install the ZIP from `build/distributions/healer-intellij-1.0.3.zip`:
+Install the generated ZIP from `build/distributions/healer-intellij-1.0.4.zip`:
 
-1. Open IntelliJ IDEA
-2. Go to **Settings** → **Plugins** → **⚙️** → **Install Plugin from Disk...**
+1. Open **IntelliJ IDEA**
+2. Navigate to **Settings** → **Plugins** → **⚙️** → **Install Plugin from Disk...**
 3. Select the ZIP file
-4. Restart IntelliJ
+4. Restart IntelliJ IDEA
 
 ### Option 2: Run in Debug Mode
 
+For development and testing:
+
 ```bash
 cd healer-intellij
-.\gradlew.bat runIde   # Windows
-./gradlew runIde       # Mac/Linux
+
+# Windows
+.\gradlew.bat runIde
+
+# macOS / Linux
+./gradlew runIde
 ```
 
-This starts a sandboxed IntelliJ with the plugin installed for testing.
+This launches a sandboxed IntelliJ instance with the plugin pre-installed.
 
-## Features
-
-| Feature | Access |
-|---------|--------|
-| **Dashboard** | View → Tool Windows → Intent Healer |
-| **Settings** | Settings → Tools → Intent Healer |
-| **Heal History** | Tools → Intent Healer → View Heal History |
-| **Live Events** | Real-time heal event monitoring |
-| **Locator Suggestions** | Right-click in editor → Suggest Stable Locator |
+---
 
 ## Configuration
 
-1. Go to **Settings** → **Tools** → **Intent Healer**
-2. Configure:
-   - **Healer Mode**: OFF / SUGGEST / AUTO_SAFE / AUTO_ALL
-   - **Cache Directory**: Location for heal cache
-   - **Enable Notifications**: Show heal notifications
-   - **Max History Entries**: Number of entries to keep
+Navigate to **Settings** → **Tools** → **Intent Healer** to configure:
+
+| Setting | Description | Options |
+|---------|-------------|---------|
+| **Healer Mode** | Controls healing behavior | `OFF`, `SUGGEST`, `AUTO_SAFE`, `AUTO_ALL` |
+| **Cache Directory** | Location for heal decision cache | File path |
+| **Enable Notifications** | Show heal event notifications | `true` / `false` |
+| **Max History Entries** | Number of history entries to retain | Integer (default: 1000) |
+
+---
 
 ## Using the Dashboard
 
-1. Open the **Intent Healer** tool window (right sidebar or View menu)
-2. **Dashboard Tab**: View real-time healing activity and statistics
-3. **History Tab**: Browse past heals
-   - Double-click to view details
-   - Use **Accept/Reject/Blacklist** buttons
-4. **Live Tab**: Watch heal events as they happen
+### Dashboard Tab
+- View real-time healing statistics
+- Monitor success rates and confidence scores
+- Track healing activity trends
+
+### History Tab
+- Browse past healing decisions
+- Double-click entries to view details
+- Use **Accept**, **Reject**, or **Blacklist** buttons to manage heals
+- Filter by scenario, locator type, or date range
+
+### Live Tab
+- Watch heal events in real-time during test execution
+- Events appear as they occur
+- Useful for debugging and monitoring active test runs
+
+---
+
+## Keyboard Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Open Intent Healer Tool Window | `Alt+Shift+H` |
+| Suggest Stable Locator | `Alt+Shift+L` (in editor) |
+
+---
 
 ## Requirements
 
-- IntelliJ IDEA 2023.2 or later
-- Java 17+
+- **IntelliJ IDEA** 2023.2 or later (Ultimate or Community)
+- **Java** 17 or later
+- **Intent Healer** framework configured in your project
+
+---
+
+## Troubleshooting
+
+### Plugin Not Loading
+Ensure IntelliJ IDEA version is 2023.2 or later. Check **Help** → **About** to verify.
+
+### No Heal Events Appearing
+1. Verify Intent Healer is enabled in your project's `healer-config.yml`
+2. Check that tests are running with the healer-agent or HealingWebDriver
+3. Ensure the plugin settings are configured correctly
+
+### Cache Directory Issues
+Use an absolute path for the cache directory. Ensure the directory exists and is writable.
+
+---
+
+## License
+
+This plugin is part of the Intent Healer framework and is licensed under AGPL-3.0.

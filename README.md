@@ -59,17 +59,17 @@ Intent Healer is an intelligent test automation framework that automatically fix
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-core</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-selenium</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 </dependency>
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-llm</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 </dependency>
 ```
 
@@ -113,7 +113,7 @@ driver.findElement(By.id("some-locator")).click();
 <dependency>
     <groupId>io.github.glaciousm</groupId>
     <artifactId>healer-agent</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <scope>test</scope>
 </dependency>
 
@@ -122,7 +122,7 @@ driver.findElement(By.id("some-locator")).click();
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
-        <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.3/healer-agent-1.0.3.jar</argLine>
+        <argLine>-javaagent:${settings.localRepository}/io/github/glaciousm/healer-agent/1.0.4/healer-agent-1.0.4.jar</argLine>
     </configuration>
 </plugin>
 ```
@@ -131,7 +131,7 @@ driver.findElement(By.id("some-locator")).click();
 
 ```bash
 mvn clean install -pl healer-agent
-mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.3.jar"
+mvn test -DargLine="-javaagent:healer-agent/target/healer-agent-1.0.4.jar"
 ```
 
 That's it! The agent automatically intercepts all WebDriver instances and adds self-healing capability with zero code changes.
@@ -154,6 +154,7 @@ See the [User Guide](docs/USER_GUIDE.md#java-agent-zero-code-integration) for de
 | `healer-report` | HTML reports, dashboards, trend analysis |
 | `healer-cli` | Command-line interface for config/cache/reports |
 | `healer-intellij` | IntelliJ IDEA plugin for heal history |
+| `healer-playwright` | Playwright integration with self-healing capabilities |
 | `healer-showcase` | Demo project with 10 self-healing test examples |
 | `healer-benchmark` | Benchmark suite with 35 scenarios to measure healing accuracy |
 
@@ -166,18 +167,21 @@ healer-core
     ↑
 healer-llm
     ↑
-healer-selenium
-    ↑
-├── healer-cucumber
-├── healer-testng
-└── healer-junit
-    ↑
-healer-showcase (demo)
+├── healer-selenium
+│       ↑
+│   ├── healer-cucumber
+│   ├── healer-testng
+│   └── healer-junit
+│           ↑
+│       healer-showcase (demo)
+│
+└── healer-playwright
 
 Standalone:
 ├── healer-report
 ├── healer-cli
-└── healer-intellij
+├── healer-intellij
+└── healer-agent
 ```
 
 ---
@@ -481,18 +485,27 @@ intent-healer/
 ├── pom.xml                     # Parent POM
 ├── CLAUDE.md                   # AI assistant instructions
 ├── README.md                   # This file
+├── SECURITY.md                 # Security policy
+├── CONTRIBUTING.md             # Contribution guidelines
+├── CHANGELOG.md                # Version history
 │
-├── healer-core/                # Core engine and models
-├── healer-llm/                 # LLM provider implementations
-├── healer-selenium/            # WebDriver wrapper
-├── healer-cucumber/            # Cucumber integration
-├── healer-testng/              # TestNG integration
-├── healer-junit/               # JUnit 5 integration
-├── healer-report/              # Report generation
+├── healer-core/                # Core engine, models, configuration
+├── healer-llm/                 # LLM providers (OpenAI, Anthropic, Ollama, etc.)
+├── healer-selenium/            # Selenium WebDriver wrapper
+├── healer-playwright/          # Playwright integration
+├── healer-agent/               # Java Agent for zero-code integration
+├── healer-cucumber/            # Cucumber integration with @Intent annotations
+├── healer-testng/              # TestNG listener integration
+├── healer-junit/               # JUnit 5 extension integration
+├── healer-report/              # HTML/JSON report generation
 ├── healer-cli/                 # Command-line interface
-├── healer-intellij/            # IDE plugin
-├── healer-showcase/            # Demo project
-└── healer-example/             # Usage examples
+├── healer-intellij/            # IntelliJ IDEA plugin
+├── healer-benchmark/           # Benchmark suite (35 scenarios)
+├── healer-showcase/            # Demo project with 10 examples
+├── healer-example/             # Usage examples
+│
+└── docs/
+    └── USER_GUIDE.md           # Comprehensive user documentation
 ```
 
 ---

@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>intent-healer</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>healer-llm</artifactId>
@@ -24,6 +24,16 @@
             <groupId>io.github.glaciousm</groupId>
             <artifactId>healer-core</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>

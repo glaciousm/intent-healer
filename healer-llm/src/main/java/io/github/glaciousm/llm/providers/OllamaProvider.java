@@ -79,6 +79,23 @@ public class OllamaProvider implements LlmProvider {
     }
 
     @Override
+    public boolean supportsVision() {
+        return true;
+    }
+
+    @Override
+    public boolean isVisionModel(String model) {
+        if (model == null) return false;
+        String lowerModel = model.toLowerCase();
+        // Vision-capable models in Ollama
+        return lowerModel.contains("llava") ||
+               lowerModel.contains("bakllava") ||
+               lowerModel.contains("llama3.2-vision") ||
+               lowerModel.contains("moondream") ||
+               lowerModel.contains("minicpm-v");
+    }
+
+    @Override
     public HealDecision evaluateCandidates(
             FailureContext failure,
             UiSnapshot snapshot,
@@ -90,12 +107,22 @@ public class OllamaProvider implements LlmProvider {
         String model = getModel(config);
 
         try {
-            // Build prompt
-            String prompt = promptBuilder.buildEvaluationPrompt(failure, snapshot, intent);
+            // Build prompt - use vision-enhanced prompt if vision is enabled
+            String prompt;
+            String screenshotBase64 = null;
+
+            if (config.isVisionEnabled() && isVisionModel(model) && snapshot.getScreenshotBase64().isPresent()) {
+                prompt = promptBuilder.buildVisionHealingPrompt(failure, snapshot, intent);
+                screenshotBase64 = snapshot.getScreenshotBase64().orElse(null);
+                logger.debug("Using vision-enhanced healing with Ollama model: {}", model);
+            } else {
+                prompt = promptBuilder.buildEvaluationPrompt(failure, snapshot, intent);
+            }
+
             String systemPrompt = promptBuilder.buildSystemPrompt();
 
             // Make API call
-            OllamaResponse response = callOllama(endpoint, model, prompt, systemPrompt, config);
+            OllamaResponse response = callOllama(endpoint, model, prompt, systemPrompt, screenshotBase64, config);
 
             // Parse response
             HealDecision decision = responseParser.parseHealDecision(response.response);
@@ -128,7 +155,7 @@ public class OllamaProvider implements LlmProvider {
             String prompt = promptBuilder.buildOutcomeValidationPrompt(expectedOutcome, before, after);
             String systemPrompt = "You are a test outcome validator. Determine if the expected outcome was achieved.";
 
-            OllamaResponse response = callOllama(endpoint, model, prompt, systemPrompt, config);
+            OllamaResponse response = callOllama(endpoint, model, prompt, systemPrompt, null, config);
 
             return responseParser.parseOutcomeResult(response.response);
 
@@ -145,6 +172,7 @@ public class OllamaProvider implements LlmProvider {
             String model,
             String prompt,
             String systemPrompt,
+            String screenshotBase64,
             LlmConfig config) throws IOException, InterruptedException {
 
         OllamaRequest request = new OllamaRequest();
@@ -155,6 +183,12 @@ public class OllamaProvider implements LlmProvider {
         request.options = new OllamaOptions();
         request.options.temperature = config != null && config.getTemperature() > 0
                 ? config.getTemperature() : 0.1;
+
+        // Add image for vision models
+        if (screenshotBase64 != null && !screenshotBase64.isEmpty() && isVisionModel(model)) {
+            request.images = List.of(screenshotBase64);
+            logger.debug("Including screenshot in Ollama vision request");
+        }
 
         String requestBody = objectMapper.writeValueAsString(request);
         int timeoutSeconds = config != null && config.getTimeoutSeconds() > 0
@@ -266,6 +300,7 @@ public class OllamaProvider implements LlmProvider {
         public String system;
         public boolean stream;
         public OllamaOptions options;
+        public List<String> images;  // Base64 encoded images for vision models
     }
 
     private static class OllamaOptions {

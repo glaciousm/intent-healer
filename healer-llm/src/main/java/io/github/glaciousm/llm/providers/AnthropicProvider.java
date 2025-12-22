@@ -45,11 +45,21 @@ public class AnthropicProvider implements LlmProvider {
                 "Anthropic API key not configured. Set ANTHROPIC_API_KEY environment variable or 'api_key_env' in healer-config.yml.",
                 getProviderName(), config.getModel());
         }
-        String prompt = promptBuilder.buildHealingPrompt(failure, snapshot, intent);
 
-        logger.debug("Calling Anthropic with model: {}", config.getModel());
+        // Build prompt - use vision-enhanced prompt if vision is enabled
+        String prompt;
+        String screenshotBase64 = null;
 
-        String response = callApi(prompt, config, apiKey);
+        if (config.isVisionEnabled() && isVisionModel(config.getModel()) && snapshot.getScreenshotBase64().isPresent()) {
+            prompt = promptBuilder.buildVisionHealingPrompt(failure, snapshot, intent);
+            screenshotBase64 = snapshot.getScreenshotBase64().orElse(null);
+            logger.debug("Using vision-enhanced healing with Anthropic model: {}", config.getModel());
+        } else {
+            prompt = promptBuilder.buildHealingPrompt(failure, snapshot, intent);
+            logger.debug("Using text-only healing with Anthropic model: {}", config.getModel());
+        }
+
+        String response = callApi(prompt, screenshotBase64, config, apiKey);
         return responseParser.parseHealDecision(response, getProviderName(), config.getModel());
     }
 
@@ -78,7 +88,25 @@ public class AnthropicProvider implements LlmProvider {
         return apiKey != null && !apiKey.isEmpty();
     }
 
+    @Override
+    public boolean supportsVision() {
+        return true;
+    }
+
+    @Override
+    public boolean isVisionModel(String model) {
+        if (model == null) return false;
+        String lowerModel = model.toLowerCase();
+        // Claude 3 models support vision
+        return lowerModel.contains("claude-3") ||
+               lowerModel.contains("claude-3.5");
+    }
+
     private String callApi(String prompt, LlmConfig config, String apiKey) {
+        return callApi(prompt, null, config, apiKey);
+    }
+
+    private String callApi(String prompt, String screenshotBase64, LlmConfig config, String apiKey) {
         String baseUrl = config.getBaseUrl() != null ? config.getBaseUrl() : DEFAULT_BASE_URL;
         String url = baseUrl + "/messages";
 
@@ -89,7 +117,35 @@ public class AnthropicProvider implements LlmProvider {
         ArrayNode messages = requestBody.putArray("messages");
         ObjectNode userMessage = messages.addObject();
         userMessage.put("role", "user");
-        userMessage.put("content", prompt);
+
+        // Check if we should use vision (multimodal) format
+        boolean useVision = screenshotBase64 != null &&
+                           !screenshotBase64.isEmpty() &&
+                           config.isVisionEnabled() &&
+                           isVisionModel(config.getModel());
+
+        if (useVision) {
+            // Anthropic multimodal format with content array
+            ArrayNode contentArray = userMessage.putArray("content");
+
+            // Add image content first (Anthropic prefers image before text)
+            ObjectNode imageContent = contentArray.addObject();
+            imageContent.put("type", "image");
+            ObjectNode source = imageContent.putObject("source");
+            source.put("type", "base64");
+            source.put("media_type", "image/png");
+            source.put("data", screenshotBase64);
+
+            // Add text content
+            ObjectNode textContent = contentArray.addObject();
+            textContent.put("type", "text");
+            textContent.put("text", prompt);
+
+            logger.debug("Using vision mode with screenshot for model: {}", config.getModel());
+        } else {
+            // Standard text-only message
+            userMessage.put("content", prompt);
+        }
 
         Request request = new Request.Builder()
                 .url(url)

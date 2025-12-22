@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>intent-healer</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>healer-agent</artifactId>
@@ -18,21 +18,51 @@
     </properties>
 
     <dependencies>
-        <!-- Intent Healer modules -->
+        <!-- Intent Healer modules (exclude JUnit to prevent Surefire provider conflicts) -->
         <dependency>
             <groupId>io.github.glaciousm</groupId>
             <artifactId>healer-core</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.github.glaciousm</groupId>
             <artifactId>healer-selenium</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.github.glaciousm</groupId>
             <artifactId>healer-llm</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit.platform</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- ByteBuddy for bytecode manipulation -->
@@ -128,6 +158,22 @@
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
+                                        <!-- Exclude JUnit Platform service files that interfere with Surefire -->
+                                        <exclude>META-INF/services/org.junit.*</exclude>
+                                        <exclude>META-INF/services/junit.*</exclude>
+                                    </excludes>
+                                </filter>
+                                <!-- Explicitly exclude JUnit Platform JARs from shading -->
+                                <filter>
+                                    <artifact>org.junit.platform:*</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.junit.jupiter:*</artifact>
+                                    <excludes>
+                                        <exclude>**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>

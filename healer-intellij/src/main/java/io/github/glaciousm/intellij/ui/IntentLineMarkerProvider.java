@@ -24,7 +24,9 @@ public class IntentLineMarkerProvider implements LineMarkerProvider {
 
     @Override
     public @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
-        if (!HealerSettings.getInstance().showLineMarkers) {
+        // Defensive check for settings availability
+        HealerSettings settings = HealerSettings.getInstance();
+        if (settings == null || !settings.showLineMarkers) {
             return null;
         }
 
@@ -38,7 +40,7 @@ public class IntentLineMarkerProvider implements LineMarkerProvider {
             return null;
         }
 
-        // Check for Intent Healer annotations
+        // Check for Intent Healer annotations (fully qualified first, then simple name)
         PsiAnnotation intentAnnotation = method.getAnnotation("io.github.glaciousm.cucumber.annotations.Intent");
         if (intentAnnotation == null) {
             intentAnnotation = method.getAnnotation("Intent");
@@ -48,7 +50,7 @@ public class IntentLineMarkerProvider implements LineMarkerProvider {
             return createLineMarkerInfo(element, "Intent-aware step definition");
         }
 
-        // Check for @Outcome annotation
+        // Check for @Outcome annotation (fully qualified first, then simple name)
         PsiAnnotation outcomeAnnotation = method.getAnnotation("io.github.glaciousm.cucumber.annotations.Outcome");
         if (outcomeAnnotation == null) {
             outcomeAnnotation = method.getAnnotation("Outcome");
@@ -58,10 +60,16 @@ public class IntentLineMarkerProvider implements LineMarkerProvider {
             return createLineMarkerInfo(element, "Outcome validation defined");
         }
 
+        // No relevant annotation found - this is expected for most methods
         return null;
     }
 
-    private LineMarkerInfo<PsiElement> createLineMarkerInfo(PsiElement element, String tooltip) {
+    private @Nullable LineMarkerInfo<PsiElement> createLineMarkerInfo(PsiElement element, String tooltip) {
+        // Defensive null check for text range
+        if (element.getTextRange() == null) {
+            return null;
+        }
+
         return new LineMarkerInfo<>(
                 element,
                 element.getTextRange(),

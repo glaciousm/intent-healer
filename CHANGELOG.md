@@ -5,6 +5,47 @@ All notable changes to Intent Healer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2025-12-21
+
+### Added
+- **Vision LLM Support (Multimodal Healing)**: Analyze screenshots alongside DOM for improved healing accuracy
+  - Vision support for OpenAI (GPT-4o, GPT-4 Turbo), Anthropic (Claude 3), and Ollama (LLaVA, Llama 3.2 Vision)
+  - Configurable vision strategies: `VISION_FIRST`, `DOM_FIRST`, `HYBRID`
+  - `VisionConfig` for controlling screenshot-based healing behavior
+  - `supportsVision()` and `isVisionModel()` methods in `LlmProvider` interface
+  - Vision-enhanced prompts with element position descriptions
+  - Local vision model support via Ollama (llava, bakllava, moondream, minicpm-v)
+- **Playwright Integration**: New `healer-playwright` module for Playwright-based test automation
+  - `HealingPage` wrapper with automatic locator healing
+  - `HealingLocator` with self-healing on element interaction failures
+  - `PlaywrightSnapshotBuilder` for UI state capture
+  - ThreadLocal-based intent context management
+- **Comprehensive Test Coverage**
+  - IntelliJ plugin unit tests (HealerSettingsTest, HealHistoryToolWindowTest, etc.)
+  - Exception hierarchy tests (27 tests for HealingException, LlmException, etc.)
+  - Notification service tests (20 tests for Slack, Teams, custom webhooks)
+  - Visual regression tests (24 tests for ScreenshotComparator)
+  - Agent tests (HealerAgentTest, AutoConfiguratorTest, WebDriverInterceptorTest)
+
+### Changed
+- `PromptBuilder` now includes `buildVisionHealingPrompt()` for multimodal prompts
+- All major providers (OpenAI, Anthropic, Ollama) updated with vision capabilities
+- Improved thread safety in `HealingWebDriver` with ThreadLocal and volatile fields
+
+### Fixed
+- **JUnit Platform Leakage**: Prevent JUnit 5 service files from leaking into shaded `healer-agent` JAR
+  - Exclude `META-INF/services/org.junit.*` and `junit.*` from shade plugin
+  - Add JUnit exclusions to all healer module dependencies (healer-core, healer-selenium, healer-llm)
+  - Change Cucumber and Selenium dependencies to `provided` scope in healer-cucumber
+  - Fixes Surefire test provider auto-detection conflicts in JUnit 4 projects
+
+### Documentation
+- Added Vision-Capable Models section to USER_GUIDE.md
+- Documented vision configuration options and strategy comparison
+- Updated module documentation with Playwright integration
+
+---
+
 ## [1.0.3] - 2025-12-21
 
 ### Added
@@ -112,6 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.0.4 | 2025-12-21 | Vision LLM support, Playwright integration, comprehensive test coverage |
 | 1.0.3 | 2025-12-21 | Community files, README improvements |
 | 1.0.2 | 2025-12-20 | Report generation, graceful provider handling |
 | 1.0.1 | 2025-12-18 | Java Agent for zero-code integration |

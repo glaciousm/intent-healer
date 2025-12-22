@@ -49,6 +49,9 @@ public class LlmConfig {
     @JsonProperty("fallback")
     private List<FallbackProvider> fallback = new ArrayList<>();
 
+    @JsonProperty("vision")
+    private VisionConfig vision = new VisionConfig();
+
     public LlmConfig() {
     }
 
@@ -173,6 +176,21 @@ public class LlmConfig {
         this.fallback = fallback != null ? fallback : new ArrayList<>();
     }
 
+    public VisionConfig getVision() {
+        return vision;
+    }
+
+    public void setVision(VisionConfig vision) {
+        this.vision = vision != null ? vision : new VisionConfig();
+    }
+
+    /**
+     * Check if vision is enabled for this configuration.
+     */
+    public boolean isVisionEnabled() {
+        return vision != null && vision.isEnabled();
+    }
+
     /**
      * Validate LLM configuration.
      */
@@ -238,5 +256,107 @@ public class LlmConfig {
         public String toString() {
             return "FallbackProvider{provider='" + provider + "', model='" + model + "'}";
         }
+    }
+
+    /**
+     * Vision/multimodal configuration for LLM providers.
+     */
+    public static class VisionConfig {
+        @JsonProperty("enabled")
+        private boolean enabled = false;
+
+        @JsonProperty("strategy")
+        private VisionStrategy strategy = VisionStrategy.HYBRID;
+
+        @JsonProperty("include_screenshot")
+        private boolean includeScreenshot = true;
+
+        @JsonProperty("highlight_candidates")
+        private boolean highlightCandidates = true;
+
+        @JsonProperty("max_image_size")
+        private int maxImageSize = 4096;
+
+        @JsonProperty("fallback_to_text")
+        private boolean fallbackToText = true;
+
+        @JsonProperty("image_quality")
+        private String imageQuality = "auto";
+
+        public VisionConfig() {
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public VisionStrategy getStrategy() {
+            return strategy;
+        }
+
+        public void setStrategy(VisionStrategy strategy) {
+            this.strategy = strategy;
+        }
+
+        public boolean isIncludeScreenshot() {
+            return includeScreenshot;
+        }
+
+        public void setIncludeScreenshot(boolean includeScreenshot) {
+            this.includeScreenshot = includeScreenshot;
+        }
+
+        public boolean isHighlightCandidates() {
+            return highlightCandidates;
+        }
+
+        public void setHighlightCandidates(boolean highlightCandidates) {
+            this.highlightCandidates = highlightCandidates;
+        }
+
+        public int getMaxImageSize() {
+            return maxImageSize;
+        }
+
+        public void setMaxImageSize(int maxImageSize) {
+            this.maxImageSize = maxImageSize;
+        }
+
+        public boolean isFallbackToText() {
+            return fallbackToText;
+        }
+
+        public void setFallbackToText(boolean fallbackToText) {
+            this.fallbackToText = fallbackToText;
+        }
+
+        public String getImageQuality() {
+            return imageQuality;
+        }
+
+        public void setImageQuality(String imageQuality) {
+            this.imageQuality = imageQuality;
+        }
+
+        @Override
+        public String toString() {
+            return "VisionConfig{enabled=" + enabled + ", strategy=" + strategy + "}";
+        }
+    }
+
+    /**
+     * Vision strategy for healing.
+     */
+    public enum VisionStrategy {
+        /** Use vision analysis first, fall back to DOM analysis */
+        VISION_FIRST,
+        /** Use DOM analysis first, fall back to vision */
+        DOM_FIRST,
+        /** Combine both vision and DOM analysis */
+        HYBRID
     }
 }

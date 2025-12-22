@@ -1,6 +1,6 @@
 # Intent Healer - User Guide
 
-A comprehensive guide to configuring, integrating, and using the LLM-powered self-healing framework for Selenium + Java + Cucumber tests.
+A comprehensive guide to configuring, integrating, and using the LLM-powered self-healing framework for Selenium, Playwright, and Cucumber tests.
 
 ---
 
@@ -83,15 +83,23 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-core</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 
-    <!-- Intent Healer Selenium Integration (required) -->
+    <!-- Intent Healer Selenium Integration (required for Selenium) -->
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-selenium</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
+        <scope>test</scope>
+    </dependency>
+
+    <!-- Intent Healer Playwright Integration (required for Playwright) -->
+    <dependency>
+        <groupId>io.github.glaciousm</groupId>
+        <artifactId>healer-playwright</artifactId>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 
@@ -99,7 +107,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-llm</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 
@@ -108,7 +116,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-cucumber</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 
@@ -116,7 +124,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-junit</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 
@@ -124,7 +132,7 @@ This section shows you how to integrate Intent Healer into your existing Seleniu
     <dependency>
         <groupId>io.github.glaciousm</groupId>
         <artifactId>healer-testng</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 </dependencies>
@@ -982,6 +990,32 @@ llm:
   # Require LLM to provide reasoning
   require_reasoning: true
 
+  # Vision/multimodal settings (for screenshot-based healing)
+  vision:
+    # Enable vision-based healing
+    enabled: false
+
+    # Vision strategy: VISION_FIRST, DOM_FIRST, or HYBRID
+    # - VISION_FIRST: Analyze screenshot first, fall back to DOM
+    # - DOM_FIRST: Analyze DOM first, use vision when ambiguous
+    # - HYBRID: Combine both screenshot and DOM analysis
+    strategy: HYBRID
+
+    # Include screenshot in LLM request
+    include_screenshot: true
+
+    # Highlight candidate elements in screenshot (draws bounding boxes)
+    highlight_candidates: true
+
+    # Maximum image dimension (pixels, for resizing large screenshots)
+    max_image_size: 4096
+
+    # Fall back to text-only if vision fails
+    fallback_to_text: true
+
+    # Image quality for vision: auto, low, high
+    image_quality: auto
+
   # Fallback providers (tried in order if primary fails)
   fallback:
     - provider: anthropic
@@ -1290,6 +1324,57 @@ llm:
   model: anthropic.claude-3-haiku-20240307-v1:0
   # Uses AWS credentials from environment or ~/.aws/credentials
 ```
+
+### Vision-Capable Models (Multimodal)
+
+Intent Healer supports **vision-based healing** where the LLM analyzes both the page screenshot AND the DOM structure to identify elements. This significantly improves accuracy for complex UIs.
+
+#### Enabling Vision Mode
+
+```yaml
+llm:
+  provider: openai
+  model: gpt-4o  # Must be a vision-capable model
+  vision:
+    enabled: true
+    strategy: HYBRID  # VISION_FIRST, DOM_FIRST, or HYBRID
+```
+
+#### Vision-Capable Models by Provider
+
+| Provider | Vision Models | Notes |
+|----------|---------------|-------|
+| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4-vision-preview` | Best accuracy with gpt-4o |
+| **Anthropic** | `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`, `claude-3-5-sonnet` | All Claude 3+ models support vision |
+| **Ollama** | `llava`, `llava:13b`, `bakllava`, `llama3.2-vision`, `moondream`, `minicpm-v` | Free local vision models |
+| **Azure** | Vision-enabled GPT-4 deployments | Same as OpenAI |
+
+#### Example: Local Vision with Ollama (LLaVA)
+
+```yaml
+llm:
+  provider: ollama
+  model: llava  # or llava:13b for better accuracy
+  base_url: http://localhost:11434
+  vision:
+    enabled: true
+    strategy: HYBRID
+```
+
+Pull the model first:
+```bash
+ollama pull llava
+# or for better quality:
+ollama pull llava:13b
+```
+
+#### Vision Strategy Comparison
+
+| Strategy | Description | Use Case |
+|----------|-------------|----------|
+| `DOM_FIRST` | Analyze DOM first, use vision when ambiguous | Lower cost, faster |
+| `VISION_FIRST` | Analyze screenshot first, validate with DOM | Complex/dynamic UIs |
+| `HYBRID` | Combine both for best confidence | Highest accuracy |
 
 #### Ollama (Local LLM)
 
@@ -1653,6 +1738,82 @@ public class LoginTest {
     }
 }
 ```
+
+### Playwright Integration
+
+Intent Healer supports Playwright Java with the `healer-playwright` module. Use `HealingPage` and `HealingLocator` for automatic locator healing.
+
+#### Step 1: Add Dependency
+
+```xml
+<dependency>
+    <groupId>io.github.glaciousm</groupId>
+    <artifactId>healer-playwright</artifactId>
+    <version>1.0.4</version>
+    <scope>test</scope>
+</dependency>
+```
+
+#### Step 2: Use HealingPage
+
+```java
+import io.github.glaciousm.playwright.HealingPage;
+import com.microsoft.playwright.*;
+
+public class PlaywrightTest {
+
+    @Test
+    void testWithHealing() {
+        // Create Playwright browser and page
+        try (Playwright playwright = Playwright.create();
+             Browser browser = playwright.chromium().launch();
+             BrowserContext context = browser.newContext()) {
+
+            Page page = context.newPage();
+
+            // Load configuration and create healing engine
+            HealerConfig config = ConfigLoader.load();
+            HealingEngine engine = new HealingEngine(config);
+
+            // Wrap with HealingPage
+            HealingPage healingPage = new HealingPage(page, engine, config);
+
+            // Navigate and interact - healing happens automatically
+            healingPage.navigate("https://example.com/login");
+            healingPage.locator("#username").fill("testuser");
+            healingPage.locator("#password").fill("password123");
+            healingPage.locator("#submit-btn").click();  // Auto-heals if locator fails
+
+            // Verify
+            assertThat(healingPage.url()).contains("/dashboard");
+        }
+    }
+}
+```
+
+#### Step 3: Use Intent Context (Optional)
+
+```java
+// Set intent context for smarter healing
+IntentContract intent = IntentContract.builder()
+    .action("CLICK")
+    .description("Submit the login form")
+    .policy(HealPolicy.AUTO_SAFE)
+    .build();
+
+healingPage.setIntent(intent);
+healingPage.locator("#submit-btn").click();
+healingPage.clearIntent();
+```
+
+#### Key Differences from Selenium
+
+| Aspect | Selenium (HealingWebDriver) | Playwright (HealingPage) |
+|--------|----------------------------|--------------------------|
+| Wrapper | `HealingWebDriver` | `HealingPage` |
+| Elements | `HealingWebElement` | `HealingLocator` |
+| Wait Strategy | Manual waits | Built-in auto-wait |
+| Creation | Wrap WebDriver | Wrap Page |
 
 ### Programmatic Integration
 

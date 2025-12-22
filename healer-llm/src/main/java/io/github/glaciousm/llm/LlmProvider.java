@@ -57,6 +57,27 @@ public interface LlmProvider {
     boolean isAvailable();
 
     /**
+     * Check if this provider supports vision/multimodal inputs.
+     * Providers that support vision can analyze screenshots alongside DOM data.
+     *
+     * @return true if the provider supports vision capabilities
+     */
+    default boolean supportsVision() {
+        return false;
+    }
+
+    /**
+     * Check if a specific model supports vision capabilities.
+     * Some providers have both vision and non-vision models.
+     *
+     * @param model the model name to check
+     * @return true if the model supports vision
+     */
+    default boolean isVisionModel(String model) {
+        return false;
+    }
+
+    /**
      * Complete a request using the LLM.
      * Default implementation throws UnsupportedOperationException.
      */

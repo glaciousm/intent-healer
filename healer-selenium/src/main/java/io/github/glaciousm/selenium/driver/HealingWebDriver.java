@@ -20,27 +20,70 @@ import java.util.Set;
 /**
  * WebDriver wrapper that provides automatic healing capabilities.
  * Intercepts element location failures and attempts to heal using LLM.
+ *
+ * <h2>Thread Safety</h2>
+ * <p>This class is designed to be thread-safe for use in parallel test execution:</p>
+ * <ul>
+ *   <li>The delegate WebDriver reference is immutable (final)</li>
+ *   <li>Intent context is stored per-thread using {@link ThreadLocal}</li>
+ *   <li>Snapshot capture uses per-thread {@link SnapshotBuilder} instances</li>
+ * </ul>
+ *
+ * <p><strong>Important:</strong> While this wrapper is thread-safe, the underlying
+ * WebDriver implementation may not be. Selenium WebDriver is generally not thread-safe
+ * for concurrent operations. If you need to run tests in parallel, use separate
+ * WebDriver instances per thread rather than sharing a single HealingWebDriver.</p>
+ *
+ * @see HealingWebElement for element-level thread safety
  */
 public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScreenshot, Interactive {
 
     private static final Logger logger = LoggerFactory.getLogger(HealingWebDriver.class);
 
+    /** The underlying WebDriver instance. Immutable after construction. */
     private final WebDriver delegate;
+
+    /** The healing engine for processing element failures. Immutable after construction. */
     private final HealingEngine healingEngine;
-    private final SnapshotBuilder snapshotBuilder;
+
+    /** Configuration for healing behavior. Immutable after construction. */
     private final HealerConfig config;
+
+    /** Analyzer for extracting source locations from stack traces. Thread-safe. */
     private final StackTraceAnalyzer stackTraceAnalyzer;
 
-    // Current context for healing (thread-safe, per-thread isolation)
+    /**
+     * Per-thread snapshot builder to avoid concurrent access issues.
+     * Each thread gets its own SnapshotBuilder instance.
+     */
+    private final ThreadLocal<SnapshotBuilder> snapshotBuilderHolder;
+
+    /** Current intent context for healing (thread-safe, per-thread isolation). */
     private final ThreadLocal<IntentContract> currentIntent = new ThreadLocal<>();
+
+    /** Current step text for healing context (thread-safe, per-thread isolation). */
     private final ThreadLocal<String> currentStepText = new ThreadLocal<>();
 
+    /**
+     * Creates a new HealingWebDriver wrapping the given delegate.
+     *
+     * @param delegate      the underlying WebDriver to wrap
+     * @param healingEngine the engine to use for healing attempts
+     * @param config        the configuration for healing behavior
+     */
     public HealingWebDriver(WebDriver delegate, HealingEngine healingEngine, HealerConfig config) {
         this.delegate = delegate;
         this.healingEngine = healingEngine;
         this.config = config;
-        this.snapshotBuilder = new SnapshotBuilder(delegate);
+        this.snapshotBuilderHolder = ThreadLocal.withInitial(() -> new SnapshotBuilder(delegate));
         this.stackTraceAnalyzer = new StackTraceAnalyzer();
+    }
+
+    /**
+     * Gets the per-thread SnapshotBuilder instance.
+     */
+    private SnapshotBuilder getSnapshotBuilder() {
+        return snapshotBuilderHolder.get();
     }
 
     /**
@@ -58,6 +101,17 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
     public void clearCurrentIntent() {
         this.currentIntent.remove();
         this.currentStepText.remove();
+    }
+
+    /**
+     * Clean up all thread-local resources for the current thread.
+     * Should be called when a thread is done using this driver to prevent memory leaks.
+     * This is particularly important in test frameworks that reuse threads.
+     */
+    public void cleanupThreadResources() {
+        this.currentIntent.remove();
+        this.currentStepText.remove();
+        this.snapshotBuilderHolder.remove();
     }
 
     @Override
@@ -198,7 +252,7 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
 
         try {
             LocatorInfo originalLocator = byToLocatorInfo(by);
-            UiSnapshot snapshot = snapshotBuilder.captureAll();
+            UiSnapshot snapshot = getSnapshotBuilder().captureAll();
 
             String stepText = currentStepText.get();
             IntentContract intent = currentIntent.get();
@@ -288,7 +342,7 @@ public class HealingWebDriver implements WebDriver, JavascriptExecutor, TakesScr
 
         try {
             LocatorInfo originalLocator = byToLocatorInfo(by);
-            UiSnapshot snapshot = snapshotBuilder.captureAll();
+            UiSnapshot snapshot = getSnapshotBuilder().captureAll();
 
             String stepText = currentStepText.get();
             IntentContract intent = currentIntent.get();

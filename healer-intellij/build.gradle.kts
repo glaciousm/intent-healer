@@ -16,6 +16,12 @@ dependencies {
     implementation("io.github.glaciousm:healer-core:1.0.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
+
+    // Test dependencies
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testImplementation("org.mockito:mockito-core:5.8.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 // Configure Gradle IntelliJ Plugin
@@ -31,6 +37,10 @@ tasks {
         sourceCompatibility = "17"
         targetCompatibility = "17"
         options.encoding = "UTF-8"
+    }
+
+    test {
+        useJUnitPlatform()
     }
 
     patchPluginXml {
